@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>port4U — Portfolio สำหรับนักเรียนไทย</title>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Anuphan',sans-serif;background:#f1f5f9;color:#0f172a;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+
+/* Layout */
+#app{display:flex;height:100vh;overflow:hidden}
+#sidebar{width:218px;background:#fff;border-right:1px solid #e2e8f0;display:flex;flex-direction:column;padding:18px 10px;flex-shrink:0;box-shadow:2px 0 12px rgba(15,23,42,.06)}
+#main{flex:1;overflow:auto;background:#f1f5f9}
+#topbar{padding:13px 32px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(241,245,249,.92);backdrop-filter:blur(12px);z-index:10}
+#content{padding:32px 36px}
+
+/* Login */
+#login-screen{min-height:100vh;background:#f1f5f9;display:flex;align-items:center;justify-content:center;padding:24px}
+
+/* Sidebar */
+.logo-row{display:flex;align-items:center;gap:9px;padding:3px 8px;margin-bottom:24px}
+.logo-icon{width:30px;height:30px;background:linear-gradient(135deg,#4f46e5,#818cf8);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-text{font-weight:800;font-size:16px;letter-spacing:-0.2px;color:#4f46e5}
+.user-card{display:flex;align-items:center;gap:9px;padding:9px 10px;margin-bottom:18px;background:#f1f5f9;border-radius:10px;border:1px solid #e2e8f0}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,rgba(79,70,229,.08),rgba(79,70,229,.18));border:1.5px solid rgba(79,70,229,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#4f46e5}
+.user-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#0f172a}
+.user-role{font-size:11px;color:#94a3b8}
+.nav-items{display:flex;flex-direction:column;gap:2px;flex:1}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:9px;cursor:pointer;color:#475569;font-size:13.5px;font-weight:500;border:none;background:transparent;width:100%;text-align:left;font-family:'Anuphan',sans-serif;transition:all .15s}
+.nav-item:hover{background:#f1f5f9;color:#0f172a}
+.nav-item.active{background:rgba(79,70,229,.08);color:#4f46e5}
+.nav-item.logout{color:#dc2626;opacity:.75;margin-top:4px}
+.nav-icon{opacity:.5;flex-shrink:0;display:flex}
+.nav-item.active .nav-icon{opacity:1}
+
+/* Buttons */
+.btn-primary{display:inline-flex;align-items:center;gap:7px;background:#4f46e5;color:#fff;border:none;padding:9px 20px;border-radius:9px;font-weight:600;font-size:13.5px;cursor:pointer;font-family:'Anuphan',sans-serif;transition:all .15s}
+.btn-primary:hover{background:#3730a3;transform:translateY(-1px)}
+.btn-ghost{display:inline-flex;align-items:center;gap:6px;background:rgba(79,70,229,.08);color:#4f46e5;border:1px solid rgba(79,70,229,.15);padding:7px 15px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600;font-family:'Anuphan',sans-serif;transition:all .15s}
+.btn-ghost:hover{background:rgba(79,70,229,.15)}
+.btn-outline{background:transparent;color:#475569;border:1px solid #cbd5e1;padding:8px 18px;border-radius:9px;font-size:13px;cursor:pointer;font-weight:500;font-family:'Anuphan',sans-serif;transition:all .15s}
+.btn-outline:hover{border-color:#4f46e5;color:#4f46e5}
+
+/* Cards */
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:22px;box-shadow:0 2px 8px rgba(15,23,42,.06);transition:all .2s}
+.stat-block{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.p-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.p-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(15,23,42,.12);border-color:#cbd5e1}
+.s-card{background:#fff;border:1px solid #e2e8f0;border-radius:13px;padding:20px 22px;transition:all .18s;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.s-card:hover{border-color:#cbd5e1;box-shadow:0 4px 16px rgba(15,23,42,.12)}
+.exam-poster{background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.exam-poster:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(15,23,42,.12)}
+.exam-row{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .18s;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.exam-row:hover{border-color:#cbd5e1;box-shadow:0 4px 16px rgba(15,23,42,.12)}
+
+/* Chips */
+.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;letter-spacing:.3px}
+.chip-sm{padding:2px 8px;font-size:11px}
+
+/* Form */
+.form-group{margin-bottom:14px}
+.form-label{display:block;color:#94a3b8;font-size:11px;margin-bottom:6px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+input.field,select.field,textarea.field{width:100%;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:9px 13px;color:#0f172a;font-size:13.5px;outline:none;font-family:'Anuphan',sans-serif;transition:border-color .18s}
+input.field:focus,select.field:focus,textarea.field:focus{border-color:#4f46e5}
+input.field::placeholder,textarea.field::placeholder{color:#94a3b8}
+textarea.field{resize:vertical}
+select.field{cursor:pointer;appearance:none}
+
+/* Modal overlay */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.4);backdrop-filter:blur(4px);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px}
+.modal{background:#fff;border:1px solid #cbd5e1;border-radius:18px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(15,23,42,.12)}
+.modal-wide{max-width:600px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.modal-title{font-weight:700;font-size:17px;color:#0f172a}
+.modal-close{background:none;border:none;color:#94a3b8;font-size:22px;cursor:pointer;line-height:1;padding:4px}
+
+/* Grid helpers */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.grid-port{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+
+/* Misc */
+.divider{border:none;border-top:1px solid #e2e8f0;margin:18px 0}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.pill{padding:6px 15px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid #e2e8f0;background:transparent;color:#475569;font-family:'Anuphan',sans-serif;transition:all .15s}
+.pill:hover{border-color:#4f46e5;color:#4f46e5}
+.pill.active{background:rgba(79,70,229,.08);border-color:#4f46e5;color:#4f46e5}
+.subject-tab{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;white-space:nowrap;background:transparent;color:#475569;font-family:'Anuphan',sans-serif;transition:all .15s}
+.subject-tab:hover{color:#0f172a;background:rgba(0,0,0,.04)}
+.subject-tab.active{background:rgba(79,70,229,.08);color:#4f46e5}
+.add-card{border:2px dashed #e2e8f0;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:160px;cursor:pointer;color:#94a3b8;font-size:13px;font-family:'Anuphan',sans-serif;transition:all .18s}
+.add-card:hover{border-color:#4f46e5;color:#4f46e5;background:rgba(79,70,229,.04)}
+.tag-badge{background:rgba(79,70,229,.08);color:#4f46e5;border:1px solid rgba(79,70,229,.15);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600}
+.search-wrap{position:relative;margin-bottom:20px}
+.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94a3b8;display:flex;pointer-events:none}
+input.search{padding-left:38px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;color:#475569;background:none;border:none;font-size:13.5px;cursor:pointer;font-family:'Anuphan',sans-serif;font-weight:500;margin-bottom:24px;padding:0}
+.back-btn:hover{color:#4f46e5}
+.works-item{display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;padding:10px 14px;margin-bottom:8px}
+.work-num{width:22px;height:22px;border-radius:50%;background:rgba(79,70,229,.08);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#4f46e5;flex-shrink:0}
+.detail-section{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:24px 28px;margin-bottom:16px;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.detail-label{font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:14px}
+.attach-row{display:flex;align-items:center;justify-content:space-between;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;margin-bottom:10px}
+.attach-icon{width:34px;height:34px;border-radius:8px;background:rgba(79,70,229,.08);display:flex;align-items:center;justify-content:center;color:#4f46e5}
+.page{display:none}.page.active{display:block}
+.hidden{display:none!important}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .22s ease forwards}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.spinner{width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:spin .8s linear infinite}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div style="width:100%;max-width:380px">
+    <div style="text-align:center;margin-bottom:36px">
+      <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#4f46e5,#818cf8);border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <svg width="16" height="16" fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+        <span style="font-size:22px;font-weight:800;letter-spacing:-0.5px;color:#4f46e5">port4U</span>
+      </div>
+      <div style="color:#475569;font-size:13.5px">แพลตฟอร์ม Portfolio สำหรับนักเรียนไทย</div>
+    </div>
+    <div class="card" style="padding:24px">
+      <div style="display:flex;gap:5px;margin-bottom:22px;background:#f1f5f9;padding:4px;border-radius:10px">
+        <button id="tab-login" onclick="switchTab('login')" style="flex:1;padding:9px;border-radius:7px;border:none;cursor:pointer;font-weight:600;font-size:13px;font-family:'Anuphan',sans-serif;background:#4f46e5;color:white;transition:all .15s">เข้าสู่ระบบ</button>
+        <button id="tab-register" onclick="switchTab('register')" style="flex:1;padding:9px;border-radius:7px;border:none;cursor:pointer;font-weight:600;font-size:13px;font-family:'Anuphan',sans-serif;background:transparent;color:#475569;transition:all .15s">สมัครสมาชิก</button>
+      </div>
+      <div id="register-fields" class="hidden">
+        <div class="form-group">
+          <label class="form-label">ฉันคือ</label>
+          <div style="display:flex;gap:8px">
+            <button id="role-student" onclick="setRole('student')" style="flex:1;padding:9px;border-radius:8px;border:1px solid #4f46e5;cursor:pointer;font-weight:600;font-size:13px;font-family:'Anuphan',sans-serif;background:rgba(79,70,229,.08);color:#4f46e5;transition:all .15s">นักเรียน</button>
+            <button id="role-senior" onclick="setRole('senior')" style="flex:1;padding:9px;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;font-weight:600;font-size:13px;font-family:'Anuphan',sans-serif;background:transparent;color:#475569;transition:all .15s">รุ่นพี่</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ชื่อ-นามสกุล</label>
+          <input id="reg-name" class="field" placeholder="มินตรา สุขใจ" type="text"/>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">อีเมล</label><input class="field" placeholder="you@email.com" type="email"/></div>
+      <div class="form-group" style="margin-bottom:20px"><label class="form-label">รหัสผ่าน</label><input class="field" placeholder="••••••••" type="password"/></div>
+      <button class="btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()">เข้าสู่ระบบ</button>
+
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="logo-row">
+      <div class="logo-icon"><svg width="15" height="15" fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+      <span class="logo-text">port4U</span>
+    </div>
+    <div class="user-card">
+      <div class="user-avatar"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+      <div style="overflow:hidden"><div class="user-name" id="sidebar-name">มินตรา ส.</div><div class="user-role" id="sidebar-role">นักเรียน</div></div>
+    </div>
+    <div class="nav-items">
+      <button class="nav-item active" onclick="navigate('portfolio')" id="nav-portfolio">
+        <span class="nav-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg></span>Portfolio ของฉัน
+      </button>
+      <button class="nav-item" onclick="navigate('senior')" id="nav-senior">
+        <span class="nav-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/></svg></span>Port รุ่นพี่
+      </button>
+      <button class="nav-item" onclick="navigate('exam')" id="nav-exam">
+        <span class="nav-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></span>ข้อสอบเก่า
+      </button>
+      <button class="nav-item" onclick="navigate('contest')" id="nav-contest">
+        <span class="nav-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M6 9H4a2 2 0 01-2-2V5h4M18 9h2a2 2 0 002-2V5h-4M12 17v4M8 21h8M6 9a6 6 0 0012 0V3H6v6z"/></svg></span>งานแข่งขัน
+      </button>
+      <button class="nav-item" onclick="navigate('buddy')" id="nav-buddy">
+        <span class="nav-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span>หาเพื่อนแข่ง
+      </button>
+      <button class="nav-item" onclick="navigate('identity')" id="nav-identity">
+        <span class="nav-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></span>ค้นหาตัวตน
+      </button>
+      <button class="nav-item" onclick="navigate('profile')" id="nav-profile">
+        <span class="nav-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>โปรไฟล์
+      </button>
+    </div>
+    <button class="nav-item logout" onclick="doLogout()">
+      <span class="nav-icon" style="opacity:1"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>ออกจากระบบ
+    </button>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <div id="topbar">
+      <div style="font-size:13px;color:#94a3b8">port4U <span style="margin:0 8px;color:#cbd5e1">›</span> <span id="topbar-title" style="color:#0f172a;font-weight:600">Portfolio ของฉัน</span></div>
+      <span id="topbar-name" style="color:#475569;font-size:13px">มินตรา สุขใจ</span>
+    </div>
+    <div id="content">
+      <!-- PORTFOLIO PAGE -->
+      <div id="page-portfolio" class="page active fade-in">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;flex-wrap:wrap;gap:16px">
+          <div><h1 style="font-size:24px;font-weight:800;letter-spacing:-0.3px;color:#0f172a;margin-bottom:4px">Portfolio ของฉัน</h1><p id="port-count" style="color:#475569;font-size:13.5px">3 ผลงาน</p></div>
+          <button class="btn-primary" onclick="openModal('modal-add-port')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> เพิ่มผลงาน
+          </button>
+        </div>
+        <div class="grid4" style="margin-bottom:28px" id="port-stats"></div>
+        <div class="filter-row" id="port-filter-row"></div>
+        <div class="grid-port" id="port-grid"></div>
+      </div>
+
+      <!-- PORTFOLIO DETAIL PAGE -->
+      <div id="page-port-detail" class="page fade-in">
+        <button class="back-btn" onclick="navigate('portfolio')">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> กลับไป Portfolio
+        </button>
+        <div id="port-detail-content" style="max-width:720px;margin:0 auto"></div>
+      </div>
+
+      <!-- SENIOR PAGE -->
+      <div id="page-senior" class="page fade-in">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;flex-wrap:wrap;gap:16px">
+          <div><h1 style="font-size:24px;font-weight:800;letter-spacing:-0.3px;color:#0f172a;margin-bottom:4px">Port รุ่นพี่</h1><p style="color:#475569;font-size:13.5px">ดูผลงานจริงที่รุ่นพี่ใช้สมัคร — กรองตามคณะที่สนใจ</p></div>
+          <button class="btn-primary hidden" id="btn-add-senior" onclick="openModal('modal-add-senior')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> แชร์ Port ของฉัน
+          </button>
+        </div>
+        <div class="search-wrap">
+          <span class="search-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input class="field search" placeholder="ค้นหา ชื่อ / คณะ / มหาลัย" oninput="renderSeniors()" id="senior-search" type="text"/>
+        </div>
+        <div class="filter-row" id="senior-filter-row"></div>
+        <div id="senior-list"></div>
+      </div>
+
+      <!-- EXAM PAGE -->
+      <div id="page-exam" class="page fade-in">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;flex-wrap:wrap;gap:16px">
+          <div><h1 style="font-size:24px;font-weight:800;letter-spacing:-0.3px;color:#0f172a;margin-bottom:4px">ข้อสอบเก่า</h1><p id="exam-count-label" style="color:#475569;font-size:13.5px">9 ชุดข้อสอบ · เปิดให้ดาวน์โหลดฟรี</p></div>
+          <button class="btn-primary" onclick="openModal('modal-add-exam')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg> อัปโหลดข้อสอบ
+          </button>
+        </div>
+        <div id="manage-exam-banner" class="hidden" style="background:rgba(220,38,38,.05);border:1.5px solid rgba(220,38,38,.2);border-radius:12px;padding:11px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#dc2626;font-weight:600">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            โหมดจัดการ — กดปุ่ม ✕ บน card เพื่อลบข้อสอบ
+          </div>
+          <button onclick="toggleManageExam()" style="background:none;border:none;color:#dc2626;font-size:13px;font-weight:600;cursor:pointer;font-family:'Anuphan',sans-serif">เสร็จแล้ว ✓</button>
+        </div>
+        <div class="search-wrap">
+          <span class="search-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input class="field search" style="margin-bottom:0" placeholder="ค้นหาข้อสอบ เช่น TPAT, คณิต, 2567..." oninput="renderExams()" id="exam-search" type="text"/>
+        </div>
+        <div style="display:flex;gap:2px;margin:16px 0 24px;overflow-x:auto;padding-bottom:4px;border-bottom:1px solid #e2e8f0" id="exam-tabs"></div>
+        <div id="exam-grid"></div>
+      </div>
+
+      <!-- CONTEST PAGE -->
+      <div id="page-contest" class="page fade-in">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;flex-wrap:wrap;gap:16px">
+          <div><h1 style="font-size:24px;font-weight:800;letter-spacing:-0.3px;color:#0f172a;margin-bottom:4px">งานแข่งขัน</h1><p style="color:#475569;font-size:13.5px">ดูรายการแข่งขันและกิจกรรมจาก CampHub</p></div>
+          <a href="https://www.camphub.in.th/contest/" target="_blank" class="btn-primary" style="text-decoration:none">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> เปิด CampHub
+          </a>
+        </div>
+        <div class="card" style="overflow:hidden;padding:0">
+          <div style="background:linear-gradient(135deg,#1e1b4b,#312e81,#1e3a5f);padding:48px 40px;text-align:center">
+            <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.1);border-radius:12px;padding:8px 18px;margin-bottom:20px;border:1px solid rgba(255,255,255,.15)">
+              <span style="color:#a5b4fc;font-weight:700;font-size:13px">CampHub</span>
+              <span style="color:rgba(255,255,255,.4)">×</span>
+              <span style="color:#8b9eff;font-weight:700;font-size:13px">Port4U</span>
+            </div>
+            <h2 style="font-size:26px;font-weight:800;color:#fff;margin-bottom:10px">รายการแข่งขันและค่ายทั่วประเทศ</h2>
+            <p style="color:rgba(255,255,255,.6);font-size:14px;margin-bottom:28px;line-height:1.6">ดูงานแข่ง ค่าย และกิจกรรมที่ช่วยเสริม portfolio<br/>คัดสรรจาก CampHub แหล่งรวบรวมกิจกรรมสำหรับนักเรียน</p>
+            <a href="https://www.camphub.in.th/contest/" target="_blank" style="display:inline-block;background:#fff;color:#1e1b4b;text-decoration:none;padding:12px 32px;border-radius:10px;font-weight:700;font-size:14px;font-family:'Anuphan',sans-serif;transition:all .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+              ดูรายการแข่งขัน →
+            </a>
+          </div>
+          <div style="padding:28px 32px">
+            <div style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px">ลิงก์ที่เกี่ยวข้อง</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+              <a href="https://www.camphub.in.th/contest/" target="_blank" class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;text-decoration:none;gap:10px"><div><div style="font-weight:600;font-size:13.5px;color:#0f172a;margin-bottom:2px">งานแข่งขัน</div><div style="font-size:12px;color:#94a3b8">ดูรายการแข่งขัน</div></div><svg width="12" height="12" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+              <a href="https://www.camphub.in.th/camp/" target="_blank" class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;text-decoration:none;gap:10px"><div><div style="font-weight:600;font-size:13.5px;color:#0f172a;margin-bottom:2px">ค่ายวิชาการ</div><div style="font-size:12px;color:#94a3b8">ค่ายและกิจกรรม</div></div><svg width="12" height="12" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+              <a href="https://www.camphub.in.th/scholarship/" target="_blank" class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;text-decoration:none;gap:10px"><div><div style="font-weight:600;font-size:13.5px;color:#0f172a;margin-bottom:2px">ทุนการศึกษา</div><div style="font-size:12px;color:#94a3b8">ทุนและโอกาส</div></div><svg width="12" height="12" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUDDY PAGE -->
+      <div id="page-buddy" class="page fade-in">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;flex-wrap:wrap;gap:16px">
+          <div><h1 style="font-size:24px;font-weight:800;letter-spacing:-0.3px;color:#0f172a;margin-bottom:4px">หาเพื่อนแข่ง</h1><p style="color:#475569;font-size:13.5px">หาเพื่อนร่วมทีม เพื่อนติว หรือที่ปรึกษา</p></div>
+          <button class="btn-primary" onclick="openModal('modal-add-buddy')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ลงประกาศหาเพื่อน
+          </button>
+        </div>
+        <!-- Stats -->
+        <div class="grid3" style="margin-bottom:24px">
+          <div class="stat-block"><div id="buddy-stat-total" style="font-size:28px;font-weight:800;color:#4f46e5;letter-spacing:-1px;margin-bottom:2px">0</div><div style="font-size:12px;color:#94a3b8;font-weight:500">ประกาศทั้งหมด</div></div>
+          <div class="stat-block"><div id="buddy-stat-team" style="font-size:28px;font-weight:800;color:#059669;letter-spacing:-1px;margin-bottom:2px">0</div><div style="font-size:12px;color:#94a3b8;font-weight:500">หาเพื่อนร่วมทีม</div></div>
+          <div class="stat-block"><div id="buddy-stat-tutor" style="font-size:28px;font-weight:800;color:#d97706;letter-spacing:-1px;margin-bottom:2px">0</div><div style="font-size:12px;color:#94a3b8;font-weight:500">หาเพื่อนติว</div></div>
+        </div>
+        <!-- Search + filter -->
+        <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <div class="search-wrap" style="flex:1;min-width:220px;margin-bottom:0">
+            <span class="search-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input class="field search" id="buddy-search" placeholder="ค้นหาชื่อ, งานแข่ง, ทักษะ..." oninput="renderBuddies()" type="text"/>
+          </div>
+          <select class="field" id="buddy-type-filter" onchange="renderBuddies()" style="width:160px">
+            <option value="ทั้งหมด">ทั้งหมด</option>
+            <option value="หาเพื่อนร่วมทีม">หาเพื่อนร่วมทีม</option>
+            <option value="หาเพื่อนติว">หาเพื่อนติว</option>
+            <option value="หาที่ปรึกษา">หาที่ปรึกษา</option>
+          </select>
+        </div>
+        <div class="filter-row" id="buddy-filter-row"></div>
+        <div id="buddy-list"></div>
+        <!-- Empty state -->
+        <div id="buddy-empty" style="text-align:center;padding:60px 0 40px">
+          <div style="font-size:52px;margin-bottom:16px">🔍</div>
+          <div style="font-weight:700;font-size:16px;color:#475569;margin-bottom:6px">ไม่พบประกาศที่ตรงกับคำค้นหา</div>
+          <div style="color:#94a3b8;font-size:13.5px">ลองลงประกาศเองก็ได้นะ!</div>
+        </div>
+        <!-- CTA banner -->
+        <div style="background:linear-gradient(135deg,rgba(79,70,229,.06),rgba(79,70,229,.02));border:1px dashed rgba(79,70,229,.25);border-radius:14px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:32px">
+          <div>
+            <div style="font-weight:700;font-size:15px;color:#0f172a;margin-bottom:4px">ยังหาเพื่อนแข่งไม่เจอ?</div>
+            <div style="color:#475569;font-size:13.5px">ลงประกาศเองเลย มีคนเห็นแน่นอน 👀</div>
+          </div>
+          <button class="btn-primary" onclick="openModal('modal-add-buddy')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ลงประกาศฟรี
+          </button>
+        </div>
+      </div>
+
+      <!-- IDENTITY PAGE -->
+      <div id="page-identity" class="page fade-in">
+
+        <!-- INTRO STATE -->
+        <div id="id-intro">
+          <div style="max-width:600px;margin:0 auto">
+            <div style="background:linear-gradient(135deg,#312e81 0%,#4338ca 45%,#6d28d9 100%);border-radius:22px;padding:44px 32px;text-align:center;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(67,56,202,.3);margin-bottom:14px">
+              <div style="position:absolute;top:-50px;right:-50px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.06)"></div>
+              <div style="position:absolute;bottom:-30px;left:-30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.04)"></div>
+              <div style="width:68px;height:68px;margin:0 auto 18px;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;position:relative;z-index:1">🧭</div>
+              <div style="font-size:26px;font-weight:800;color:#fff;letter-spacing:-.4px;margin-bottom:10px;position:relative;z-index:1">ค้นหาตัวตนของคุณ</div>
+              <div style="font-size:14px;color:rgba(255,255,255,.75);line-height:1.7;margin-bottom:26px;position:relative;z-index:1">ตอบ 15 คำถาม 4 ตัวเลือก — ไม่มีคำตอบถูกหรือผิด<br/>แล้ว AI จะวิเคราะห์และแนะนำเส้นทางที่ใช่สำหรับคุณโดยเฉพาะ</div>
+              <div style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-bottom:26px;position:relative;z-index:1">
+                <span style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.9);border-radius:20px;padding:6px 15px;font-size:12.5px;font-weight:600">✏️ หาสิ่งที่ชอบ</span>
+                <span style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.9);border-radius:20px;padding:6px 15px;font-size:12.5px;font-weight:600">🤖 AI วิเคราะห์จริง</span>
+                <span style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.9);border-radius:20px;padding:6px 15px;font-size:12.5px;font-weight:600">🎯 แนะนำส่วนตัว</span>
+              </div>
+              <button onclick="startIdentityQuiz()" style="background:#fff;color:#4338ca;border:none;border-radius:13px;padding:13px 38px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Anuphan',sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.18);transition:all .18s;position:relative;z-index:1" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">เริ่มเลย →</button>
+            </div>
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px 22px;box-shadow:0 2px 8px rgba(15,23,42,.05)">
+              <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin-bottom:14px">คุณจะได้รับ</div>
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#475569"><div style="width:8px;height:8px;border-radius:50%;background:#4f46e5;flex-shrink:0"></div>วิเคราะห์ตัวตนและจุดแข็งของคุณ</div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#475569"><div style="width:8px;height:8px;border-radius:50%;background:#059669;flex-shrink:0"></div>แนะนำค่ายที่เหมาะกับคุณโดยเฉพาะ พร้อมเหตุผล</div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#475569"><div style="width:8px;height:8px;border-radius:50%;background:#d97706;flex-shrink:0"></div>งานแข่งขันที่น่าลองเข้าร่วม</div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#475569"><div style="width:8px;height:8px;border-radius:50%;background:#7c3aed;flex-shrink:0"></div>คณะและมหาวิทยาลัยที่เหมาะะ</div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#475569"><div style="width:8px;height:8px;border-radius:50%;background:#e11d48;flex-shrink:0"></div>คำแนะนำส่วนตัวจาก AI</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUIZ STATE -->
+        <div id="id-quiz" class="hidden">
+          <div style="max-width:600px;margin:0 auto">
+            <div style="background:#e2e8f0;border-radius:99px;height:6px;margin-bottom:7px"><div id="id-progress-bar" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#4f46e5,#7c3aed);width:6.67%;transition:width .4s cubic-bezier(.4,0,.2,1)"></div></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:22px">
+              <span id="id-q-label">ข้อ 1 จาก 15</span><span id="id-q-pct">7%</span>
+            </div>
+            <div id="id-q-card" style="background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:26px 26px 22px;box-shadow:0 4px 16px rgba(15,23,42,.07)">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                <div id="id-q-num" style="width:28px;height:28px;border-radius:8px;background:rgba(79,70,229,.08);color:#4f46e5;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800">1</div>
+                <div id="id-q-cat" style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase">🧠 ความสนใจ</div>
+              </div>
+              <div id="id-q-text" style="font-size:17px;font-weight:700;color:#0f172a;line-height:1.5;margin-bottom:18px"></div>
+              <div id="id-options" style="display:flex;flex-direction:column;gap:9px"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px">
+              <button id="id-btn-prev" onclick="idPrevQ()" disabled style="background:transparent;border:1.5px solid #e2e8f0;color:#475569;border-radius:11px;padding:9px 20px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:'Anuphan',sans-serif;transition:all .15s">← ก่อนหน้า</button>
+              <button id="id-btn-next" onclick="idNextQ()" disabled style="background:#4f46e5;color:#fff;border:none;border-radius:11px;padding:9px 26px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:'Anuphan',sans-serif;transition:all .15s;margin-left:auto">ถัดไป →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOADING STATE -->
+        <div id="id-loading" class="hidden">
+          <div style="max-width:500px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:52px 32px;text-align:center;box-shadow:0 4px 16px rgba(15,23,42,.07)">
+            <div style="width:52px;height:52px;margin:0 auto 18px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:spin .8s linear infinite"></div>
+            <div style="font-size:16px;font-weight:600;color:#475569;margin-bottom:6px">AI กำลังวิเคราะห์ผลลัพธ์</div>
+            <div style="font-size:13px;color:#94a3b8">กำลังประมวลผลคำตอบของคุณ...</div>
+            <div style="margin-top:22px;display:flex;flex-direction:column;gap:8px" id="id-loading-steps"></div>
+          </div>
+        </div>
+
+        <!-- RESULT STATE -->
+        <div id="id-result" class="hidden">
+          <div style="max-width:620px;margin:0 auto">
+
+            <!-- Hero -->
+            <div style="background:linear-gradient(135deg,#312e81 0%,#4338ca 50%,#6d28d9 100%);border-radius:20px;padding:30px 26px;text-align:center;box-shadow:0 16px 48px rgba(67,56,202,.3);position:relative;overflow:hidden;margin-bottom:14px">
+              <div style="position:absolute;top:-35px;right:-35px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.07)"></div>
+              <div id="id-res-type" style="display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:20px;padding:4px 15px;font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px;backdrop-filter:blur(6px);position:relative;z-index:1"></div>
+              <div id="id-res-emoji" style="font-size:50px;margin-bottom:10px;position:relative;z-index:1;display:block"></div>
+              <div id="id-res-title" style="font-size:23px;font-weight:800;color:#fff;letter-spacing:-.4px;margin-bottom:8px;position:relative;z-index:1"></div>
+              <div id="id-res-desc" style="font-size:13.5px;color:rgba(255,255,255,.8);line-height:1.75;position:relative;z-index:1"></div>
+            </div>
+
+            <!-- Strengths -->
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px 22px;margin-bottom:12px;box-shadow:0 2px 8px rgba(15,23,42,.05)">
+              <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin-bottom:16px">💪 จุดแข็งของคุณ</div>
+              <div id="id-strengths"></div>
+            </div>
+
+            <!-- Camps -->
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px 22px;margin-bottom:12px;box-shadow:0 2px 8px rgba(15,23,42,.05)">
+              <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin-bottom:14px">🏕️ ค่ายที่เหมาะกับคุณ</div>
+              <div id="id-camps" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+            </div>
+
+            <!-- Faculties -->
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px 22px;margin-bottom:12px;box-shadow:0 2px 8px rgba(15,23,42,.05)">
+              <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin-bottom:14px">🎓 คณะที่แนะนำ</div>
+              <div id="id-faculties" style="display:flex;flex-direction:column;gap:8px"></div>
+            </div>
+
+            <!-- Tips -->
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px 22px;margin-bottom:12px;box-shadow:0 2px 8px rgba(15,23,42,.05)">
+              <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin-bottom:14px">💡 คำแนะนำสำหรับคุณ</div>
+              <div id="id-tips" style="display:flex;flex-direction:column;gap:8px"></div>
+            </div>
+
+            <button onclick="resetIdentityQuiz()" style="display:block;width:100%;background:#4f46e5;color:#fff;border:none;border-radius:13px;padding:13px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:'Anuphan',sans-serif;margin-top:4px;transition:all .15s" onmouseover="this.style.background='#3730a3'" onmouseout="this.style.background='#4f46e5'">🔄 ทำแบบทดสอบใหม่</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PROFILE PAGE -->
+      <div id="page-profile" class="page fade-in">
+        <h1 style="font-size:24px;font-weight:800;letter-spacing:-0.3px;color:#0f172a;margin-bottom:4px">โปรไฟล์</h1>
+        <p style="color:#475569;font-size:13.5px;margin-bottom:28px">ข้อมูลส่วนตัวและความสนใจ</p>
+        <div style="display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:start">
+          <div class="card" style="text-align:center">
+            <div style="width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,rgba(79,70,229,.08),rgba(79,70,229,.2));border:2px solid rgba(79,70,229,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:#4f46e5"><svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+            <div id="profile-name" style="font-weight:700;font-size:15px;color:#0f172a;margin-bottom:8px">มินตรา สุขใจ</div>
+            <div style="display:flex;gap:6px;justify-content:center;margin-bottom:4px">
+              <button id="role-btn-student" onclick="switchRole('student')" style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Anuphan',sans-serif;border:1.5px solid #4f46e5;background:rgba(79,70,229,.08);color:#4f46e5;transition:all .15s">นักเรียน</button>
+              <button id="role-btn-senior" onclick="switchRole('senior')" style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Anuphan',sans-serif;border:1.5px solid #e2e8f0;background:transparent;color:#94a3b8;transition:all .15s">รุ่นพี่</button>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-weight:700;font-size:11px;color:#94a3b8;margin-bottom:18px;letter-spacing:.6px;text-transform:uppercase">ข้อมูลการเรียน</div>
+            <div class="grid2" id="profile-fields"></div>
+            <hr class="divider"/>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn-primary" id="save-btn" onclick="saveProfile()">บันทึกข้อมูล</button>
+              <button id="btn-manage-exam" class="btn-outline" onclick="toggleManageExam();navigate('exam')">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> จัดการข้อสอบ
+              </button>
+              <button class="btn-outline" onclick="doLogout()">ออกจากระบบ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div id="modal-confirm" class="overlay hidden" onclick="closeModal('modal-confirm')">
+  <div class="modal" style="max-width:360px" onclick="event.stopPropagation()">
+    <div style="text-align:center;padding:8px 0 20px">
+      <div style="width:48px;height:48px;background:rgba(220,38,38,.08);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px">🗑️</div>
+      <div style="font-weight:700;font-size:16px;color:#0f172a;margin-bottom:6px">ยืนยันการลบ</div>
+      <div id="confirm-msg" style="font-size:13.5px;color:#475569;line-height:1.6"></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-outline" style="flex:1;justify-content:center;text-align:center" onclick="closeModal('modal-confirm')">ยกเลิก</button>
+      <button id="confirm-yes" style="flex:1;background:#dc2626;color:#fff;border:none;border-radius:9px;padding:9px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:'Anuphan',sans-serif">ลบเลย</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-add-port" class="overlay hidden" onclick="closeModal('modal-add-port')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><span class="modal-title">เพิ่มผลงานใหม่</span><button class="modal-close" onclick="closeModal('modal-add-port')">✕</button></div>
+    <div class="form-group"><label class="form-label">ชื่อผลงาน / รางวัล *</label><input class="field" id="p-title" placeholder="เช่น รางวัลชนะเลิศ Science Olympiad" type="text"/></div>
+    <div class="grid2">
+      <div class="form-group"><label class="form-label">ประเภท</label><select class="field" id="p-type"><option>วิชาการ</option><option>กิจกรรม</option><option>งานแข่ง</option><option>อาสาสมัคร</option><option>อื่นๆ</option></select></div>
+      <div class="form-group"><label class="form-label">ระดับ</label><select class="field" id="p-level"><option>ระดับโรงเรียน</option><option>ระดับภาค</option><option>ระดับประเทศ</option><option>ระดับนานาชาติ</option></select></div>
+    </div>
+    <div class="grid2">
+      <div class="form-group"><label class="form-label">ปี (พ.ศ.)</label><input class="field" id="p-year" placeholder="2567" type="text"/></div>
+      <div class="form-group"><label class="form-label">แท็ก (คั่นด้วย ,)</label><input class="field" id="p-tags" placeholder="เช่น Biology, Research" type="text"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">รายละเอียด</label><textarea class="field" id="p-desc" rows="4" placeholder="เล่ารายละเอียดของผลงานนี้ได้เต็มที่"></textarea></div>
+    <div class="form-group"><label class="form-label">แนบไฟล์</label><input class="field" type="file" multiple style="padding:7px 13px"/></div>
+    <div style="display:flex;gap:10px"><button class="btn-primary" style="flex:1;justify-content:center" onclick="addPortItem()">บันทึกผลงาน</button><button class="btn-outline" onclick="closeModal('modal-add-port')">ยกเลิก</button></div>
+  </div>
+</div>
+
+<div id="modal-add-exam" class="overlay hidden" onclick="closeModal('modal-add-exam')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><span class="modal-title">อัปโหลดข้อสอบเก่า</span><button class="modal-close" onclick="closeModal('modal-add-exam')">✕</button></div>
+    <div class="form-group"><label class="form-label">ชื่อข้อสอบ *</label><input class="field" id="e-title" placeholder="เช่น TPAT3 คณิต 2567" type="text"/></div>
+    <div class="grid2">
+      <div class="form-group"><label class="form-label">วิชา</label><select class="field" id="e-subject"><option>TGAT</option><option>TPAT</option><option>คณิตศาสตร์</option><option>ฟิสิกส์</option><option>เคมี</option><option>ชีววิทยา</option><option>ภาษาอังกฤษ</option><option>ภาษาไทย</option><option>สังคมศึกษา</option><option>อื่นๆ</option></select></div>
+      <div class="form-group"><label class="form-label">ประเภท</label><select class="field" id="e-type"><option>TGAT</option><option>TPAT</option><option>PAT</option><option>A-Level</option><option>ข้อสอบมหาลัย</option><option>อื่นๆ</option></select></div>
+    </div>
+    <div class="grid2">
+      <div class="form-group"><label class="form-label">ปี (พ.ศ.)</label><input class="field" id="e-year" placeholder="2567" type="text"/></div>
+      <div class="form-group"><label class="form-label">จำนวนหน้า</label><input class="field" id="e-pages" placeholder="24" type="text"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">แหล่งที่มา</label><input class="field" id="e-source" placeholder="เช่น MYTCAS / โรงเรียนเตรียมอุดม" type="text"/></div>
+    <div class="form-group"><label class="form-label">🔗 ลิงก์ข้อสอบ (Google Drive)</label><input class="field" id="e-link" placeholder="https://drive.google.com/..." type="url"/></div>
+    <div class="form-group"><label class="form-label">🔗 ลิงก์เฉลย (Google Drive) <span style="color:#94a3b8;font-weight:400;font-size:11px">ถ้ามี</span></label><input class="field" id="e-answer-link" placeholder="https://drive.google.com/..." type="url"/></div>
+    <div style="display:flex;gap:10px"><button class="btn-primary" style="flex:1;justify-content:center" onclick="addExamItem()">อัปโหลด</button><button class="btn-outline" onclick="closeModal('modal-add-exam')">ยกเลิก</button></div>
+  </div>
+</div>
+
+<div id="modal-add-senior" class="overlay hidden" onclick="closeModal('modal-add-senior')">
+  <div class="modal modal-wide" onclick="event.stopPropagation()">
+    <div class="modal-header"><span class="modal-title">แชร์ Port ของฉัน</span><button class="modal-close" onclick="closeModal('modal-add-senior')">✕</button></div>
+    <p style="color:#475569;font-size:13px;margin-bottom:20px">ช่วยน้องๆ โดยแชร์ผลงานและไฟล์ portfolio ที่ใช้สมัครเข้ามหาลัย</p>
+
+    <!-- ที่ติด — เพิ่มได้หลายแห่ง -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <label class="form-label" style="margin:0">ที่ที่ติด</label>
+      <button onclick="addAdmissionField()" style="background:none;border:none;color:#4f46e5;font-size:12px;cursor:pointer;font-weight:600;font-family:'Anuphan',sans-serif">+ เพิ่มที่ติด</button>
+    </div>
+    <div id="admission-fields">
+      <div class="admission-row" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:10px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">แห่งที่ 1</span>
+          <div style="flex:1;height:1px;background:#e2e8f0"></div>
+        </div>
+        <div class="grid2" style="gap:10px">
+          <input class="field adm-faculty" placeholder="คณะ เช่น วิศวกรรมคอมพิวเตอร์" type="text"/>
+          <input class="field adm-uni" placeholder="มหาวิทยาลัย เช่น จุฬาฯ" type="text"/>
+          <select class="field adm-round"><option>Portfolio</option><option>โควตา</option><option>TCAS3</option><option>TCAS4</option></select>
+          <input class="field adm-gpa" placeholder="GPA ตอนสมัคร เช่น 3.85" type="text"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-bottom:0">
+      <div class="form-group"><label class="form-label">ปีที่เข้า (รุ่น)</label><input class="field" id="s-year" placeholder="67" type="text"/></div>
+    </div>
+
+    <!-- ผลงาน -->
+    <div class="form-group" style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <label class="form-label" style="margin:0">ผลงานที่ใช้สมัคร</label>
+        <button onclick="addWorkField()" style="background:none;border:none;color:#4f46e5;font-size:12px;cursor:pointer;font-weight:600;font-family:'Anuphan',sans-serif">+ เพิ่ม</button>
+      </div>
+      <div id="works-fields"><div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><input class="field" placeholder="ผลงานที่ 1 เช่น YWC #20" type="text"/></div></div>
+    </div>
+
+    <!-- อัปโหลด PDF -->
+    <div class="form-group">
+      <label class="form-label">อัปโหลดไฟล์ Portfolio (PDF)</label>
+      <div id="pdf-drop-zone" onclick="document.getElementById('s-pdf').click()" style="border:2px dashed #cbd5e1;border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .18s;background:#f8fafc">
+        <svg width="28" height="28" fill="none" stroke="#94a3b8" stroke-width="1.6" viewBox="0 0 24 24" style="margin:0 auto 8px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        <div id="pdf-label" style="font-size:13.5px;color:#94a3b8">คลิกเพื่อเลือกไฟล์ PDF <br/><span style="font-size:12px">ขนาดไม่เกิน 20MB</span></div>
+      </div>
+      <input id="s-pdf" type="file" accept=".pdf" class="hidden" onchange="handlePdfSelect(this)"/>
+    </div>
+
+    <div class="form-group"><label class="form-label">คำแนะนำสำหรับน้อง</label><textarea class="field" id="s-desc" rows="3" placeholder="สิ่งสำคัญที่สุดในการสมัครรอบนี้คือ..."></textarea></div>
+    <div style="display:flex;gap:10px"><button class="btn-primary" style="flex:1;justify-content:center" onclick="addSeniorItem()">แชร์ Port ของฉัน</button><button class="btn-outline" onclick="closeModal('modal-add-senior')">ยกเลิก</button></div>
+  </div>
+</div>
+
+<div id="modal-add-buddy" class="overlay hidden" onclick="closeModal('modal-add-buddy')">
+  <div class="modal modal-wide" onclick="event.stopPropagation()">
+    <div class="modal-header"><span class="modal-title">ลงประกาศหาเพื่อนแข่ง</span><button class="modal-close" onclick="closeModal('modal-add-buddy')">✕</button></div>
+    <div class="grid2">
+      <div class="form-group"><label class="form-label">งานแข่งขันที่สนใจ</label><input class="field" id="b-contest" placeholder="เช่น โอลิมปิกฟิสิกส์" type="text"/></div>
+      <div class="form-group"><label class="form-label">ประเภทประกาศ</label><select class="field" id="b-type"><option>หาเพื่อนร่วมทีม</option><option>หาเพื่อนติว</option><option>หาที่ปรึกษา</option></select></div>
+      <div class="form-group"><label class="form-label">โรงเรียน</label><input class="field" id="b-school" placeholder="เช่น เตรียมอุดมศึกษา" type="text"/></div>
+      <div class="form-group"><label class="form-label">ระดับชั้น</label><select class="field" id="b-grade"><option>ม.1</option><option>ม.2</option><option>ม.3</option><option>ม.4</option><option>ม.5</option><option>ม.6</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">ทักษะ / วิชาที่ถนัด (คั่นด้วย ,)</label><input class="field" id="b-skills" placeholder="เช่น Python, คณิต, UI Design" type="text"/></div>
+    <div class="form-group"><label class="form-label">รายละเอียด (บอกว่าหาคนแบบไหน ทำอะไรได้บ้าง)</label><textarea class="field" id="b-desc" rows="4" placeholder="เล่าให้ละเอียดสักหน่อยนะ เช่น ติวมาแล้วกี่ปี ต้องการคนที่ถนัดอะไร นัดกันที่ไหนได้บ้าง"></textarea></div>
+    <div class="form-group"><label class="form-label">ช่องทางติดต่อ</label><input class="field" id="b-contact" placeholder="เช่น line: yourline / IG: yourIG / FB: ชื่อของคุณ" type="text"/></div>
+    <div style="display:flex;gap:10px"><button class="btn-primary" style="flex:1;justify-content:center" onclick="addBuddyItem()">ลงประกาศ</button><button class="btn-outline" onclick="closeModal('modal-add-buddy')">ยกเลิก</button></div>
+  </div>
+</div>
+
+<div id="modal-senior-detail" class="overlay hidden" onclick="closeModal('modal-senior-detail')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div id="senior-detail-content"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+//  ⚙️  SUPABASE CONFIG — แก้ค่า 2 บรรทัดนี้จาก Project Settings ของคุณ
+// ══════════════════════════════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://rsxoyfndyanxpfyeacoo.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_knglS0xu4OCQ6YzOUjuR8Q_0MqKnLjE';
+// ══════════════════════════════════════════════════════════════════════════════
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── Data ───────────────────────────────────────────────────────────────────────
+let currentRole = 'student';
+let currentUser = 'มินตรา สุขใจ';
+let currentUserId = null;
+let currentPage = 'portfolio';
+let portFilter = 'ทั้งหมด';
+let examSubject = 'ทั้งหมด';
+
+let buddyItems = [];
+let buddyTypeFilter = 'ทั้งหมด';
+
+const BUDDY_TYPE_STYLE = {
+  'หาเพื่อนร่วมทีม': {bg:'rgba(79,70,229,.08)',  color:'#4f46e5'},
+  'หาเพื่อนติว':     {bg:'rgba(5,150,105,.08)',   color:'#059669'},
+  'หาที่ปรึกษา':     {bg:'rgba(217,119,6,.08)',   color:'#d97706'},
+};
+
+const LEVEL_STYLE = {
+  'ระดับประเทศ':   {bg:'rgba(5,150,105,.08)',color:'#059669',bar:'#059669'},
+  'ระดับภาค':      {bg:'rgba(37,99,235,.08)', color:'#2563eb',bar:'#2563eb'},
+  'ระดับนานาชาติ': {bg:'rgba(124,58,237,.08)',color:'#7c3aed',bar:'#7c3aed'},
+  'ระดับโรงเรียน': {bg:'rgba(217,119,6,.08)', color:'#d97706',bar:'#d97706'},
+};
+const ROUND_STYLE = {
+  'Portfolio': {bg:'rgba(5,150,105,.08)',color:'#059669'},
+  'โควตา':    {bg:'rgba(37,99,235,.08)', color:'#2563eb'},
+  'TCAS3':    {bg:'rgba(217,119,6,.08)', color:'#d97706'},
+};
+const TYPE_STYLE = {
+  'TPAT':    {bg:'rgba(37,99,235,.08)', color:'#2563eb'},
+  'PAT':     {bg:'rgba(124,58,237,.08)',color:'#7c3aed'},
+  'TGAT':    {bg:'rgba(5,150,105,.08)', color:'#059669'},
+  'A-Level': {bg:'rgba(217,119,6,.08)', color:'#d97706'},
+};
+const SUBJECT_COLOR = {
+  'TGAT':        {bg:'#f0f9ff',accent:'#0284c7',icon:'T'},
+  'TPAT':        {bg:'#fff1f2',accent:'#e11d48',icon:'P'},
+  'คณิตศาสตร์': {bg:'#eff6ff',accent:'#2563eb',icon:'∑'},
+  'ฟิสิกส์':    {bg:'#f5f3ff',accent:'#7c3aed',icon:'⚛'},
+  'เคมี':       {bg:'#ecfdf5',accent:'#059669',icon:'⚗'},
+  'ชีววิทยา':  {bg:'#fdf4ff',accent:'#9333ea',icon:'🧬'},
+  'ภาษาอังกฤษ':{bg:'#fff7ed',accent:'#ea580c',icon:'A'},
+  'ภาษาไทย':   {bg:'#fef2f2',accent:'#dc2626',icon:'ก'},
+  'สังคมศึกษา':{bg:'#f0fdf4',accent:'#16a34a',icon:'🌏'},
+};
+
+let portfolioItems = [
+  {id:1,title:'รางวัลชนะเลิศ Science Project',type:'วิชาการ',level:'ระดับภาค',year:2567,
+   desc:'โครงงานวิทยาศาสตร์เรื่องการบำบัดน้ำเสียด้วยสาหร่าย ได้รับรางวัลระดับภาคกลาง ทำร่วมกับทีม 2 คน ใช้เวลาวิจัยกว่า 6 เดือน ผลการทดลองแสดงให้เห็นว่าสาหร่ายสีเขียวแกมน้ำเงินสามารถลดค่า BOD ในน้ำเสียได้ถึง 73% ภายใน 7 วัน นำเสนอต่อคณะกรรมการและได้รับคัดเลือกเข้าแข่งขันระดับประเทศต่อ',
+   tags:['Biology','Research','Environment'],attachments:['report.pdf','poster.png']},
+  {id:2,title:'ค่าย Young Webmaster #20',type:'กิจกรรม',level:'ระดับประเทศ',year:2566,
+   desc:'ผ่านการคัดเลือกเข้าร่วมค่าย YWC ครั้งที่ 20 จากผู้สมัครกว่า 2,000 คนทั่วประเทศ ใช้เวลา 5 วันในการพัฒนา web application ด้าน social impact ร่วมกับทีมข้ามสถาบัน ได้รับรางวัล Best Design ในงาน project presentation',
+   tags:['Web Dev','Design','Teamwork'],attachments:['certificate.pdf']},
+  {id:3,title:'Hackathon KBTG — Top 10',type:'งานแข่ง',level:'ระดับประเทศ',year:2567,
+   desc:'สร้างแอป fintech ชื่อ SaveStep ร่วมกับทีม 3 คน เพื่อช่วยให้คนรุ่นใหม่ออมเงินผ่านกิจกรรมประจำวัน เข้ารอบ final จาก 200+ ทีม ได้รับคำแนะนำจาก KBTG engineers และได้ทดสอบแอปกับ user จริง 50 คนภายในงาน',
+   tags:['Fintech','Mobile App','UX'],attachments:['pitch_deck.pdf']},
+];
+
+let seniorItems = [
+  {id:1,name:'พีรพงศ์ แก้วมณี',faculty:'วิศวกรรมคอมพิวเตอร์',uni:'จุฬาฯ',round:'Portfolio',year:66,works:['YWC #19','Gold POSN คณิต','Hackathon SCB อันดับ 1'],gpa:'3.92',desc:'เน้น project-based ทำจริง แนะนำให้หาค่ายดีๆ และสร้างผลงานที่ impact ชัดเจน',isNew:false,admissions:[{faculty:'วิศวกรรมคอมพิวเตอร์',uni:'จุฬาลงกรณ์มหาวิทยาลัย',round:'Portfolio',gpa:'3.92'},{faculty:'วิศวกรรมคอมพิวเตอร์',uni:'มหาวิทยาลัยมหิดล',round:'Portfolio',gpa:'3.92'},{faculty:'Computer Engineering',uni:'KMITL',round:'Portfolio',gpa:'3.92'}]},
+  {id:2,name:'ณัฐนิชา วงศ์สุวรรณ',faculty:'แพทยศาสตร์',uni:'มหิดล',round:'Portfolio',year:66,works:['ค่ายแพทย์จุฬา','โอลิมปิกชีววิทยา เหรียญเงิน','งานวิจัย รพ.รามา'],gpa:'4.00',desc:'ต้องแสดงให้เห็นว่าอยากเป็นแพทย์จริงๆ งานวิจัยหรืออาสาในโรงพยาบาลสำคัญมาก',isNew:false,admissions:[{faculty:'แพทยศาสตร์',uni:'มหาวิทยาลัยมหิดล',round:'Portfolio',gpa:'4.00'},{faculty:'แพทยศาสตร์',uni:'จุฬาลงกรณ์มหาวิทยาลัย',round:'Portfolio',gpa:'4.00'}]},
+  {id:3,name:'ธนภัทร พรมมา',faculty:'สถาปัตยกรรม',uni:'ศิลปากร',round:'โควตา',year:67,works:['Design Award ระดับชาติ อันดับ 1','ค่าย Design Thinking','Port 60 หน้า'],gpa:'3.75',desc:'Portfolio ภาพต้องสวยและมี concept ชัด ฝึก sketch และ presentation ให้เป็นธรรมชาติ',isNew:false,admissions:[{faculty:'สถาปัตยกรรม',uni:'มหาวิทยาลัยศิลปากร',round:'โควตา',gpa:'3.75'}]},
+  {id:4,name:'สุภัทรา ดีมาก',faculty:'วิศวกรรมคอมพิวเตอร์',uni:'เกษตรศาสตร์',round:'TCAS3',year:67,works:['POSN คอมพิวเตอร์ อันดับ 1','ค่าย IPST','AI Project ชนะเลิศ'],gpa:'3.88',desc:'คะแนน TPAT3 สำคัญมากสำหรับ Eng TCAS3 ควบคู่กับมี project จริงให้ดูใน GitHub',isNew:false,admissions:[{faculty:'วิศวกรรมคอมพิวเตอร์',uni:'มหาวิทยาลัยเกษตรศาสตร์',round:'TCAS3',gpa:'3.88'},{faculty:'วิศวกรรมซอฟต์แวร์',uni:'มหาวิทยาลัยขอนแก่น',round:'โควตา',gpa:'3.88'},{faculty:'Computer Science',uni:'KMUTT',round:'TCAS3',gpa:'3.88'}]},
+];
+
+let examItems = [
+  {id:10,subject:'TGAT',title:'TGAT รอบ 1 ปี 2567',year:2567,source:'MYTCAS',pages:40,downloads:2100,type:'TGAT'},
+  {id:11,subject:'TGAT',title:'TGAT รอบ 2 ปี 2567',year:2567,source:'MYTCAS',pages:40,downloads:1850,type:'TGAT'},
+  {id:12,subject:'TGAT',title:'TGAT รอบ 1 ปี 2566',year:2566,source:'ส่วนตัว',pages:38,downloads:1420,type:'TGAT'},
+  {id:13,subject:'TPAT',title:'TPAT1 กสพท 2567',year:2567,source:'MYTCAS',pages:50,downloads:1760,type:'TPAT'},
+  {id:14,subject:'TPAT',title:'TPAT2 ศิลปกรรม 2567',year:2567,source:'MYTCAS',pages:32,downloads:890,type:'TPAT'},
+  {id:15,subject:'TPAT',title:'TPAT3 วิทย์-เทค 2567',year:2567,source:'MYTCAS',pages:44,downloads:1340,type:'TPAT'},
+  {id:16,subject:'TPAT',title:'TPAT4 สถาปัตย์ 2567',year:2567,source:'MYTCAS',pages:28,downloads:670,type:'TPAT'},
+  {id:17,subject:'TPAT',title:'TPAT5 ครุศาสตร์ 2567',year:2567,source:'MYTCAS',pages:30,downloads:590,type:'TPAT'},
+  {id:1,subject:'คณิตศาสตร์',title:'TPAT3 คณิต 2567',year:2567,source:'MYTCAS',pages:24,downloads:1240,type:'TPAT'},
+  {id:2,subject:'คณิตศาสตร์',title:'PAT1 คณิต 2566',year:2566,source:'ม.เชียงใหม่',pages:30,downloads:980,type:'PAT'},
+  {id:3,subject:'ฟิสิกส์',title:'TPAT3 ฟิสิกส์ 2567',year:2567,source:'MYTCAS',pages:20,downloads:870,type:'TPAT'},
+  {id:4,subject:'ฟิสิกส์',title:'PAT2 ฟิสิกส์ 2565',year:2565,source:'ส่วนตัว',pages:28,downloads:540,type:'PAT'},
+  {id:5,subject:'ชีววิทยา',title:'TPAT3 ชีวะ 2567',year:2567,source:'MYTCAS',pages:22,downloads:760,type:'TPAT'},
+  {id:6,subject:'เคมี',title:'PAT2 เคมี 2566',year:2566,source:'โรงเรียนเตรียมอุดม',pages:26,downloads:620,type:'PAT'},
+  {id:7,subject:'ภาษาอังกฤษ',title:'TGAT English 2567',year:2567,source:'MYTCAS',pages:18,downloads:1580,type:'TGAT'},
+  {id:8,subject:'ภาษาไทย',title:'TGAT Thai 2567',year:2567,source:'MYTCAS',pages:16,downloads:1100,type:'TGAT'},
+  {id:9,subject:'สังคมศึกษา',title:'A-Level สังคม 2566',year:2566,source:'ส่วนตัว',pages:32,downloads:430,type:'A-Level'},
+];
+
+// ── Auth (Supabase) ────────────────────────────────────────────────────────────
+let isRegister = false;
+let selectedRole = 'student';
+
+function switchTab(tab) {
+  isRegister = tab === 'register';
+  document.getElementById('tab-login').style.background = isRegister ? 'transparent' : '#4f46e5';
+  document.getElementById('tab-login').style.color = isRegister ? '#475569' : 'white';
+  document.getElementById('tab-register').style.background = isRegister ? '#4f46e5' : 'transparent';
+  document.getElementById('tab-register').style.color = isRegister ? 'white' : '#475569';
+  document.getElementById('register-fields').classList.toggle('hidden', !isRegister);
+  document.querySelector('[onclick="doLogin()"]').textContent = isRegister ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
+}
+
+function setRole(role) {
+  selectedRole = role;
+  document.getElementById('role-student').style.background = role==='student'?'rgba(79,70,229,.08)':'transparent';
+  document.getElementById('role-student').style.color = role==='student'?'#4f46e5':'#475569';
+  document.getElementById('role-student').style.borderColor = role==='student'?'#4f46e5':'#e2e8f0';
+  document.getElementById('role-senior').style.background = role==='senior'?'rgba(79,70,229,.08)':'transparent';
+  document.getElementById('role-senior').style.color = role==='senior'?'#4f46e5':'#475569';
+  document.getElementById('role-senior').style.borderColor = role==='senior'?'#4f46e5':'#e2e8f0';
+}
+
+// แสดง toast สั้นๆ ด้านล่างขวา
+function showToast(msg, isError=false) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;background:${isError?'#dc2626':'#0f172a'};color:#fff;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:600;z-index:9999;font-family:'Anuphan',sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:fadeIn .2s ease`;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 3000);
+}
+
+async function doLogin() {
+  const emailEl = document.querySelector('input[type="email"]');
+  const passEl  = document.querySelector('input[type="password"]');
+  const email = emailEl.value.trim();
+  const pass  = passEl.value;
+  const name  = document.getElementById('reg-name')?.value.trim() || '';
+  const btn   = document.querySelector('[onclick="doLogin()"]');
+
+  if(!email || !pass) { showToast('กรุณากรอกอีเมลและรหัสผ่าน', true); return; }
+
+  btn.textContent = '⏳ กำลังโหลด...';
+  btn.disabled = true;
+
+  try {
+    if (isRegister) {
+      // ── Register ──
+      const { data, error } = await sb.auth.signUp({
+        email, password: pass,
+        options: { data: { full_name: name || email, role: selectedRole } }
+      });
+      if (error) throw error;
+      // upsert profile row
+      if (data.user) {
+        await sb.from('profiles').upsert({
+          id: data.user.id,
+          full_name: name || email,
+          role: selectedRole,
+          email,
+        });
+      }
+      showToast('สมัครสมาชิกสำเร็จ! กรุณายืนยันอีเมล (ถ้าเปิดใช้ใน Supabase)');
+    } else {
+      // ── Login ──
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
+      await onSignedIn(data.user);
+    }
+  } catch(e) {
+    showToast('❌ ' + (e.message || 'เกิดข้อผิดพลาด'), true);
+  } finally {
+    btn.textContent = isRegister ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
+    btn.disabled = false;
+  }
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUserId = null;
+  portfolioItems = [];
+  seniorItems = [];
+  buddyItems = [];
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+async function onSignedIn(user) {
+  currentUserId = user.id;
+  // fetch profile
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  if (profile) {
+    currentUser = profile.full_name || user.email;
+    currentRole = profile.role || 'student';
+  } else {
+    // create profile if not exists (Google OAuth first login)
+    currentUser = user.user_metadata?.full_name || user.email;
+    currentRole = 'student';
+    await sb.from('profiles').upsert({ id: user.id, full_name: currentUser, role: currentRole, email: user.email });
+  }
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  await loadAllData();
+  initApp();
+}
+
+// ── Load data from Supabase ────────────────────────────────────────────────────
+async function loadAllData() {
+  // Portfolio: เฉพาะของ user ที่ login อยู่
+  const { data: ports } = await sb.from('portfolios').select('*').eq('user_id', currentUserId).order('created_at', { ascending: false });
+  portfolioItems = (ports || []).map(p => ({
+    id: p.id, title: p.title, type: p.type, level: p.level, year: p.year,
+    desc: p.desc, tags: p.tags || [], attachments: p.attachments || [],
+  }));
+
+  // Seniors: ทุกคน
+  const { data: snrs } = await sb.from('seniors').select('*').order('created_at', { ascending: false });
+  seniorItems = (snrs || []).map(s => ({
+    id: s.id, name: s.name, faculty: s.faculty, uni: s.uni, round: s.round,
+    year: s.year, works: s.works || [], gpa: s.gpa, desc: s.desc,
+    pdfName: s.pdf_name, pdfUrl: s.pdf_url, isNew: false,
+    admissions: s.admissions || [],
+  }));
+
+  // Buddies: ทุกคน
+  const { data: buds } = await sb.from('buddies').select('*').order('created_at', { ascending: false });
+  buddyItems = (buds || []).map(b => ({
+    id: b.id, name: b.name, contest: b.contest, type: b.type,
+    school: b.school, grade: b.grade, skills: b.skills,
+    desc: b.desc, contact: b.contact, isNew: false,
+    user_id: b.user_id,
+  }));
+
+  // Exams: ทุกคน (ใช้ข้อมูล default + จาก DB)
+  const { data: exams } = await sb.from('exams').select('*').order('year', { ascending: false });
+  if (exams && exams.length > 0) {
+    examItems = exams.map(e => ({
+      id: e.id, subject: e.subject, title: e.title, year: e.year,
+      source: e.source, pages: e.pages, downloads: e.downloads || 0,
+      type: e.type, link: e.link, answerLink: e.answer_link,
+    }));
+  }
+  // ถ้า DB exams ว่าง ให้ใช้ default data เดิม (ไม่เปลี่ยน examItems)
+}
+
+// ── Check session on page load ─────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    await onSignedIn(session.user);
+  }
+});
+
+// ── Navigation ─────────────────────────────────────────────────────────────────
+const PAGE_TITLES = {portfolio:'Portfolio ของฉัน',senior:'Port รุ่นพี่',exam:'ข้อสอบเก่า',contest:'งานแข่งขัน',buddy:'หาเพื่อนแข่ง',profile:'โปรไฟล์',identity:'ค้นหาตัวตน','port-detail':'Portfolio ของฉัน'};
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el = document.getElementById('page-'+page);
+  if(el){ el.classList.add('active'); el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in'); }
+  const navId = page==='port-detail'?'portfolio':page;
+  const nav = document.getElementById('nav-'+navId);
+  if(nav) nav.classList.add('active');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[page]||page;
+  currentPage = page;
+}
+
+// ── Portfolio ──────────────────────────────────────────────────────────────────
+function chip(bg,color,text,small=''){
+  return `<span class="chip${small?' chip-sm':''}" style="background:${bg};color:${color}">${text}</span>`;
+}
+
+function renderPortfolio() {
+  const types = ['ทั้งหมด','วิชาการ','กิจกรรม','งานแข่ง','อาสาสมัคร'];
+  const filtered = portFilter==='ทั้งหมด'?portfolioItems:portfolioItems.filter(i=>i.type===portFilter);
+
+  document.getElementById('port-count').textContent = portfolioItems.length+' ผลงาน';
+
+  // Stats
+  const stats = [
+    {label:'ทั้งหมด',value:portfolioItems.length,color:'#4f46e5'},
+    {label:'ระดับประเทศ',value:portfolioItems.filter(i=>i.level==='ระดับประเทศ').length,color:'#059669'},
+    {label:'ระดับภาค',value:portfolioItems.filter(i=>i.level==='ระดับภาค').length,color:'#2563eb'},
+    {label:'งานแข่งขัน',value:portfolioItems.filter(i=>i.type==='งานแข่ง').length,color:'#d97706'},
+  ];
+  document.getElementById('port-stats').innerHTML = stats.map(s=>`
+    <div class="stat-block"><div style="font-size:28px;font-weight:800;color:${s.color};letter-spacing:-1px;margin-bottom:2px">${s.value}</div><div style="font-size:12px;color:#94a3b8;font-weight:500">${s.label}</div></div>
+  `).join('');
+
+  // Filter
+  document.getElementById('port-filter-row').innerHTML = types.map(t=>`
+    <button class="pill${portFilter===t?' active':''}" onclick="setPortFilter('${t}')">${t}</button>
+  `).join('');
+
+  // Cards
+  let cards = filtered.map(item=>{
+    const ls = LEVEL_STYLE[item.level]||{bg:'rgba(79,70,229,.08)',color:'#4f46e5',bar:'#4f46e5'};
+    const tags = (item.tags||[]).map(t=>`<span class="tag-badge">#${t}</span>`).join('');
+    return `<div class="p-card" onclick="showPortDetail(${item.id})">
+      <div style="height:4px;background:${ls.bar}"></div>
+      <div style="padding:18px 20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          ${chip(ls.bg,ls.color,item.level)} <span style="font-size:12px;color:#94a3b8">พ.ศ. ${item.year}</span>
+        </div>
+        <div style="font-weight:700;font-size:15px;line-height:1.45;margin-bottom:10px;color:#0f172a">${item.title}</div>
+        <div style="color:#475569;font-size:13px;line-height:1.7;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${item.desc}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${tags}</div>
+          <span style="font-size:12px;color:#4f46e5;font-weight:600">ดูรายละเอียด →</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  cards += `<div class="add-card" onclick="openModal('modal-add-port')">
+    <div style="width:36px;height:36px;border:2px dashed currentColor;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px">+</div>
+    เพิ่มผลงาน
+  </div>`;
+  document.getElementById('port-grid').innerHTML = cards;
+}
+
+function setPortFilter(f) { portFilter=f; renderPortfolio(); }
+
+function showPortDetail(id) {
+  const item = portfolioItems.find(i=>i.id===id);
+  if(!item) return;
+  const ls = LEVEL_STYLE[item.level]||{bg:'rgba(79,70,229,.08)',color:'#4f46e5',bar:'#4f46e5'};
+  const tags = (item.tags||[]).map(t=>`<span class="tag-badge">#${t}</span>`).join('');
+  const attaches = (item.attachments||[]).map(a=>`
+    <div class="attach-row">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="attach-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <span style="font-size:13.5px;color:#0f172a;font-weight:500">${a}</span>
+      </div>
+      <button class="btn-ghost" style="font-size:12px;padding:5px 12px">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> ดาวน์โหลด
+      </button>
+    </div>`).join('');
+
+  document.getElementById('port-detail-content').innerHTML = `
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;margin-bottom:20px;box-shadow:0 4px 20px rgba(15,23,42,.06)">
+      <div style="height:5px;background:${ls.bar}"></div>
+      <div style="padding:28px 32px">
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          ${chip(ls.bg,ls.color,item.level)} ${chip('#f1f5f9','#475569',item.type)} ${chip('#f1f5f9','#475569','พ.ศ. '+item.year)}
+        </div>
+        <h1 style="font-size:22px;font-weight:800;letter-spacing:-0.3px;color:#0f172a;margin-bottom:16px;line-height:1.4">${item.title}</h1>
+        ${tags?`<div style="display:flex;gap:8px;flex-wrap:wrap">${tags}</div>`:''}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">รายละเอียด</div>
+      <p style="color:#0f172a;font-size:15px;line-height:1.85;white-space:pre-wrap">${item.desc}</p>
+    </div>
+    ${item.attachments?.length?`<div class="detail-section"><div class="detail-label">ไฟล์แนบ</div>${attaches}</div>`:''}
+  `;
+  navigate('port-detail');
+}
+
+async function addPortItem() {
+  const title = document.getElementById('p-title').value.trim();
+  if(!title) return;
+  const item = {
+    user_id: currentUserId,
+    title,
+    type: document.getElementById('p-type').value,
+    level: document.getElementById('p-level').value,
+    year: parseInt(document.getElementById('p-year').value)||2567,
+    desc: document.getElementById('p-desc').value,
+    tags: document.getElementById('p-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    attachments: [],
+  };
+  const { data, error } = await sb.from('portfolios').insert(item).select().single();
+  if (error) { showToast('❌ บันทึกไม่สำเร็จ: ' + error.message, true); return; }
+  portfolioItems.unshift({ ...item, id: data.id });
+  closeModal('modal-add-port');
+  document.getElementById('p-title').value='';document.getElementById('p-desc').value='';document.getElementById('p-tags').value='';
+  renderPortfolio();
+  showToast('✅ เพิ่มผลงานสำเร็จ!');
+}
+
+// ── Seniors ────────────────────────────────────────────────────────────────────
+let seniorFacultyFilter = 'ทั้งหมด';
+
+function renderSeniors() {
+  const search = document.getElementById('senior-search').value;
+  const faculties = ['ทั้งหมด',...[...new Set(seniorItems.map(s=>s.faculty))]];
+  const filtered = seniorItems.filter(s=>(seniorFacultyFilter==='ทั้งหมด'||s.faculty===seniorFacultyFilter)&&(!search||s.name.includes(search)||s.faculty.includes(search)||s.uni.includes(search)));
+
+  document.getElementById('senior-filter-row').innerHTML = faculties.map(f=>`
+    <button class="pill${seniorFacultyFilter===f?' active':''}" onclick="setSeniorFilter('${f}')">${f}</button>
+  `).join('');
+
+  if(!filtered.length){document.getElementById('senior-list').innerHTML='<div style="text-align:center;padding:60px 0;color:#94a3b8">ไม่พบรุ่นพี่ที่ตรงกับคำค้นหา</div>';return;}
+
+  document.getElementById('senior-list').innerHTML = filtered.map(s=>{
+    const rs = ROUND_STYLE[s.round]||{bg:'rgba(79,70,229,.08)',color:'#4f46e5'};
+    const works = s.works.slice(0,3).map(w=>`<span style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:7px;padding:3px 10px;font-size:12.5px;color:#475569">${w}</span>`).join('');
+    const more = s.works.length>3?`<span style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:7px;padding:3px 10px;font-size:12.5px;color:#94a3b8">+${s.works.length-3}</span>`:'';
+    const newBadge = s.isNew?chip('rgba(79,70,229,.08)','#4f46e5','ใหม่'):'';
+    const multiAdm = s.admissions && s.admissions.length > 1 ? chip('rgba(5,150,105,.08)','#059669',`🏆 ติด ${s.admissions.length} แห่ง`) : '';
+    const pdfBadge = s.pdfUrl ? `<span style="font-size:11px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);color:#dc2626;border-radius:6px;padding:2px 8px;font-weight:600">📄 PDF</span>` : '';
+    return `<div class="s-card">
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(79,70,229,.08),rgba(79,70,229,.18));border:1.5px solid rgba(79,70,229,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#4f46e5">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div style="flex:1">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:3px">
+            <span style="font-weight:700;font-size:15px;color:#0f172a">${s.name}</span>
+            ${chip(rs.bg,rs.color,s.round)} <span style="font-size:12px;color:#94a3b8">รุ่น ${s.year}</span> ${newBadge} ${multiAdm} ${pdfBadge}
+          </div>
+          <div style="color:#475569;font-size:13px;margin-bottom:12px">${s.faculty} · ${s.uni}<span style="margin-left:12px;color:#4f46e5;font-weight:700">GPA ${s.gpa}</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px">${works}${more}</div>
+        </div>
+        <button class="btn-ghost" style="flex-shrink:0" onclick="showSeniorDetail(${s.id})">ดู Port</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setSeniorFilter(f){seniorFacultyFilter=f;renderSeniors();}
+
+function showSeniorDetail(id) {
+  const s = seniorItems.find(x=>x.id===id); if(!s) return;
+  const rs = ROUND_STYLE[s.round]||{bg:'rgba(79,70,229,.08)',color:'#4f46e5'};
+  const works = s.works.map((w,i)=>`<div class="works-item"><div class="work-num">${i+1}</div><span style="font-size:13.5px;color:#0f172a">${w}</span></div>`).join('');
+
+  // Multiple admissions section
+  const admList = s.admissions && s.admissions.length > 1 ? s.admissions : null;
+  const admSection = admList ? `
+    <div style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;margin-top:16px">
+      ผลการสมัคร (${admList.length} แห่ง)
+    </div>
+    ${admList.map((a,i)=>{
+      const aRs = ROUND_STYLE[a.round]||{bg:'rgba(79,70,229,.08)',color:'#4f46e5'};
+      return `<div style="display:flex;align-items:center;gap:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:11px 14px;margin-bottom:8px">
+        <div style="width:24px;height:24px;border-radius:50%;background:rgba(79,70,229,.08);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#4f46e5;flex-shrink:0">${i+1}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px;color:#0f172a">${a.faculty}</div>
+          <div style="font-size:12.5px;color:#475569">${a.uni}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <span class="chip chip-sm" style="background:${aRs.bg};color:${aRs.color};display:block;margin-bottom:3px">${a.round}</span>
+          ${a.gpa&&a.gpa!=='-'?`<span style="font-size:11px;color:#94a3b8">GPA ${a.gpa}</span>`:''}
+        </div>
+      </div>`;
+    }).join('')}` : `
+    <div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div><div style="font-size:10px;color:#94a3b8;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">คณะ</div><div style="font-weight:700;font-size:14px;color:#4f46e5">${s.faculty}</div></div>
+      <div><div style="font-size:10px;color:#94a3b8;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">มหาวิทยาลัย</div><div style="font-weight:700;font-size:14px;color:#4f46e5">${s.uni}</div></div>
+      <div><div style="font-size:10px;color:#94a3b8;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">GPA</div><div style="font-weight:700;font-size:14px;color:#4f46e5">${s.gpa}</div></div>
+    </div>`;
+
+  // PDF button
+  const pdfBtn = s.pdfUrl ? `
+    <a href="${s.pdfUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:7px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);border-radius:9px;padding:8px 16px;font-size:13px;font-weight:600;color:#dc2626;text-decoration:none;margin-top:14px;transition:all .15s" onmouseover="this.style.background='rgba(220,38,38,.12)'" onmouseout="this.style.background='rgba(220,38,38,.06)'">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15h6M9 11h6"/></svg>
+      ดู Portfolio PDF · ${s.pdfName}
+    </a>` : '';
+
+  document.getElementById('senior-detail-content').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div style="display:flex;gap:14px;align-items:center">
+        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,rgba(79,70,229,.08),rgba(79,70,229,.2));border:2px solid rgba(79,70,229,.2);display:flex;align-items:center;justify-content:center;color:#4f46e5;flex-shrink:0"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+        <div><div style="font-weight:700;font-size:16px;color:#0f172a;margin-bottom:4px">${s.name}</div><div style="display:flex;gap:8px;flex-wrap:wrap">${chip(rs.bg,rs.color,s.round)} <span style="font-size:12px;color:#94a3b8">รุ่น ${s.year}</span></div></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-senior-detail')">✕</button>
+    </div>
+    ${admSection}
+    <div style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;margin-top:16px">ผลงานที่ใช้สมัคร</div>
+    ${works}
+    ${pdfBtn}
+    ${s.desc?`<div style="background:rgba(79,70,229,.06);border:1px solid rgba(79,70,229,.15);border-radius:12px;padding:14px 16px;margin-top:16px"><div style="font-size:11px;color:#4f46e5;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">คำแนะนำจากรุ่นพี่</div><p style="color:#475569;font-size:13.5px;line-height:1.75">${s.desc}</p></div>`:''}
+  `;
+  openModal('modal-senior-detail');
+}
+
+function addAdmissionField() {
+  const rows = document.querySelectorAll('#admission-fields .admission-row');
+  const n = rows.length + 1;
+  const div = document.createElement('div');
+  div.className = 'admission-row';
+  div.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:10px';
+  div.innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">แห่งที่ ${n}</span>
+      <div style="flex:1;height:1px;background:#e2e8f0"></div>
+      <button onclick="this.closest('.admission-row').remove()" style="background:none;border:none;color:#94a3b8;font-size:16px;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div class="grid2" style="gap:10px">
+      <input class="field adm-faculty" placeholder="คณะ เช่น แพทยศาสตร์" type="text"/>
+      <input class="field adm-uni" placeholder="มหาวิทยาลัย เช่น มหิดล" type="text"/>
+      <select class="field adm-round"><option>Portfolio</option><option>โควตา</option><option>TCAS3</option><option>TCAS4</option></select>
+      <input class="field adm-gpa" placeholder="GPA ตอนสมัคร เช่น 3.85" type="text"/>
+    </div>`;
+  document.getElementById('admission-fields').appendChild(div);
+}
+
+let selectedPdfName = '';
+let selectedPdfUrl  = '';
+let selectedPdfFile = null;
+
+function handlePdfSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  selectedPdfFile = file;
+  selectedPdfName = file.name;
+  selectedPdfUrl  = URL.createObjectURL(file);
+  const zone  = document.getElementById('pdf-drop-zone');
+  const label = document.getElementById('pdf-label');
+  zone.style.borderColor  = '#4f46e5';
+  zone.style.background   = 'rgba(79,70,229,.04)';
+  label.innerHTML = `<span style="color:#4f46e5;font-weight:600">📄 ${file.name}</span><br/><span style="font-size:12px;color:#94a3b8">${(file.size/1024/1024).toFixed(1)} MB · คลิกเพื่อเปลี่ยน</span>`;
+}
+
+function addWorkField() {
+  const n = document.getElementById('works-fields').children.length + 1;
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px';
+  div.innerHTML = `<input class="field" placeholder="ผลงานที่ ${n}" type="text"/><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer">✕</button>`;
+  document.getElementById('works-fields').appendChild(div);
+}
+
+async function addSeniorItem() {
+  // collect all admissions
+  const admissions = [...document.querySelectorAll('#admission-fields .admission-row')].map(row => ({
+    faculty: row.querySelector('.adm-faculty').value.trim(),
+    uni:     row.querySelector('.adm-uni').value.trim(),
+    round:   row.querySelector('.adm-round').value,
+    gpa:     row.querySelector('.adm-gpa').value.trim() || '-',
+  })).filter(a => a.faculty && a.uni);
+
+  if (!admissions.length) return;
+
+  const works = [...document.querySelectorAll('#works-fields input')].map(i => i.value.trim()).filter(Boolean);
+  const primary = admissions[0];
+
+  // Upload PDF to Supabase Storage (ถ้ามี)
+  let pdfUrl = ''; let pdfName = '';
+  if (selectedPdfFile) {
+    const ext = selectedPdfFile.name.split('.').pop();
+    const path = `seniors/${currentUserId}_${Date.now()}.${ext}`;
+    const { data: upData, error: upErr } = await sb.storage.from('portfolios').upload(path, selectedPdfFile);
+    if (!upErr) {
+      const { data: urlData } = sb.storage.from('portfolios').getPublicUrl(path);
+      pdfUrl = urlData.publicUrl;
+      pdfName = selectedPdfFile.name;
+    }
+  }
+
+  const item = {
+    user_id: currentUserId,
+    name: currentUser,
+    faculty: primary.faculty, uni: primary.uni, round: primary.round, gpa: primary.gpa,
+    admissions,
+    year: parseInt(document.getElementById('s-year').value) || 67,
+    works,
+    desc: document.getElementById('s-desc').value,
+    pdf_name: pdfName, pdf_url: pdfUrl,
+  };
+
+  const { data, error } = await sb.from('seniors').insert(item).select().single();
+  if (error) { showToast('❌ บันทึกไม่สำเร็จ: ' + error.message, true); return; }
+
+  seniorItems.unshift({ ...item, id: data.id, pdfName, pdfUrl, isNew: true });
+
+  // reset form
+  selectedPdfName = ''; selectedPdfUrl = ''; selectedPdfFile = null;
+  document.getElementById('pdf-label').innerHTML = 'คลิกเพื่อเลือกไฟล์ PDF <br/><span style="font-size:12px">ขนาดไม่เกิน 20MB</span>';
+  document.getElementById('pdf-drop-zone').style.cssText = 'border:2px dashed #cbd5e1;border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .18s;background:#f8fafc';
+  document.getElementById('s-pdf').value = '';
+  document.getElementById('s-year').value = '';
+  document.getElementById('s-desc').value = '';
+  document.getElementById('works-fields').innerHTML = '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><input class="field" placeholder="ผลงานที่ 1 เช่น YWC #20" type="text"/></div>';
+  document.getElementById('admission-fields').innerHTML = `
+    <div class="admission-row" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:10px">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">แห่งที่ 1</span>
+        <div style="flex:1;height:1px;background:#e2e8f0"></div>
+      </div>
+      <div class="grid2" style="gap:10px">
+        <input class="field adm-faculty" placeholder="คณะ เช่น วิศวกรรมคอมพิวเตอร์" type="text"/>
+        <input class="field adm-uni" placeholder="มหาวิทยาลัย เช่น จุฬาฯ" type="text"/>
+        <select class="field adm-round"><option>Portfolio</option><option>โควตา</option><option>TCAS3</option><option>TCAS4</option></select>
+        <input class="field adm-gpa" placeholder="GPA ตอนสมัคร เช่น 3.85" type="text"/>
+      </div>
+    </div>`;
+
+  closeModal('modal-add-senior');
+  renderSeniors();
+  showToast('✅ แชร์ Port สำเร็จ!');
+}
+
+// ── Exams ──────────────────────────────────────────────────────────────────────
+const EXAM_SUBJECTS = ['ทั้งหมด','TGAT','TPAT','คณิตศาสตร์','ฟิสิกส์','เคมี','ชีววิทยา','ภาษาอังกฤษ','ภาษาไทย','สังคมศึกษา'];
+
+function renderExams() {
+  const search = document.getElementById('exam-search').value;
+  // Tabs
+  document.getElementById('exam-tabs').innerHTML = EXAM_SUBJECTS.map(s=>`
+    <button class="subject-tab${examSubject===s?' active':''}" onclick="setExamSubject('${s}')">${s}</button>
+  `).join('');
+
+  const filtered = examItems.filter(e=>(examSubject==='ทั้งหมด'||e.subject===examSubject)&&(!search||e.title.includes(search)||e.subject.includes(search)||e.type.includes(search)));
+  const showGrouped = examSubject==='ทั้งหมด'&&!search;
+
+  const dlBtn = (exam) => {
+    const examBtn = exam.link
+      ? `<a href="${exam.link}" target="_blank" class="btn-ghost" style="font-size:12px;padding:5px 12px;text-decoration:none"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> ข้อสอบ</a>`
+      : `<button class="btn-ghost" style="font-size:12px;padding:5px 12px;opacity:.4;cursor:not-allowed" disabled><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> ข้อสอบ</button>`;
+    const answerBtn = exam.answerLink
+      ? `<a href="${exam.answerLink}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 12px;background:rgba(5,150,105,.08);color:#059669;border:1px solid rgba(5,150,105,.2);border-radius:8px;font-weight:600;text-decoration:none;font-family:'Anuphan',sans-serif">✓ เฉลย</a>`
+      : '';
+    return `<div style="display:flex;gap:6px;flex-wrap:wrap">${examBtn}${answerBtn}</div>`;
+  };
+
+  if(showGrouped) {
+    let html='';
+    EXAM_SUBJECTS.slice(1).forEach(subj=>{
+      const list=examItems.filter(e=>e.subject===subj); if(!list.length) return;
+      const sc=SUBJECT_COLOR[subj]||{bg:'#f8fafc',accent:'#4f46e5',icon:'📄'};
+      const posters = list.map(exam=>{
+        const ts=TYPE_STYLE[exam.type]||{bg:'rgba(79,70,229,.08)',color:'#4f46e5'};
+        return `<div class="exam-poster" style="position:relative">
+          <button data-del-exam="${exam.id}" class="del-exam-btn hidden" style="position:absolute;top:8px;left:8px;z-index:2;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.18);color:#dc2626;border-radius:6px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;line-height:1" title="ลบ">✕</button>
+          <div style="background:${sc.bg};padding:22px 18px 18px;border-bottom:1px solid ${sc.accent}18;text-align:center;position:relative">
+            <div style="font-size:30px;font-weight:800;color:${sc.accent};letter-spacing:-1px;margin-bottom:4px">${exam.type}</div>
+            <div style="font-size:13px;color:${sc.accent};opacity:.7;font-weight:600">${exam.year}</div>
+            <div style="position:absolute;top:10px;right:10px">${chip(ts.bg,ts.color,exam.type,true)}</div>
+          </div>
+          <div style="padding:14px 16px">
+            <div style="font-weight:700;font-size:13.5px;color:#0f172a;margin-bottom:6px;line-height:1.4">${exam.title}</div>
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">${exam.pages} หน้า · ${exam.source}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:11.5px;color:#94a3b8">${exam.downloads.toLocaleString()} ดาวน์</span>
+              ${dlBtn(exam)}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+      html+=`<div style="margin-bottom:36px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div style="width:36px;height:36px;border-radius:10px;background:${sc.bg};border:1.5px solid ${sc.accent}33;display:flex;align-items:center;justify-content:center;font-size:17px;color:${sc.accent};font-weight:700;flex-shrink:0">${sc.icon}</div>
+          <span style="font-weight:800;font-size:16px;color:#0f172a">${subj}</span>
+          <span style="color:#94a3b8;font-size:12.5px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:20px;padding:2px 10px">${list.length} ชุด</span>
+        </div>
+        <div class="grid-auto">${posters}</div>
+      </div>`;
+    });
+    document.getElementById('exam-grid').innerHTML=html;
+  } else {
+    if(!filtered.length){document.getElementById('exam-grid').innerHTML='<div style="text-align:center;padding:60px 0;color:#94a3b8">ไม่พบข้อสอบที่ตรงกับคำค้นหา</div>';return;}
+    document.getElementById('exam-grid').innerHTML=filtered.map(exam=>{
+      const sc=SUBJECT_COLOR[exam.subject]||{bg:'#f8fafc',accent:'#4f46e5',icon:'📄'};
+      const ts=TYPE_STYLE[exam.type]||{bg:'rgba(79,70,229,.08)',color:'#4f46e5'};
+      return `<div class="exam-row">
+        <div style="width:42px;height:42px;border-radius:10px;background:${sc.bg};display:flex;align-items:center;justify-content:center;font-size:18px;color:${sc.accent};font-weight:700;flex-shrink:0">${sc.icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap">
+            <span style="font-weight:600;font-size:14px;color:#0f172a">${exam.title}</span>${chip(ts.bg,ts.color,exam.type,true)}
+          </div>
+          <div style="font-size:12.5px;color:#94a3b8">${exam.subject} · ${exam.pages} หน้า · ${exam.source}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          ${dlBtn(exam)}
+          <button data-del-exam="${exam.id}" class="del-exam-btn hidden" style="background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);color:#dc2626;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0" title="ลบ">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function setExamSubject(s){examSubject=s;renderExams();if(examManageMode)showDelExamBtns();}
+
+let examManageMode = false;
+
+function toggleManageExam(){
+  examManageMode = !examManageMode;
+  const btn = document.getElementById('btn-manage-exam');
+  const banner = document.getElementById('manage-exam-banner');
+  if(examManageMode){
+    btn.style.background='rgba(220,38,38,.08)';
+    btn.style.borderColor='rgba(220,38,38,.3)';
+    btn.style.color='#dc2626';
+    banner.classList.remove('hidden');
+    showDelExamBtns();
+  } else {
+    btn.style.background='';btn.style.borderColor='';btn.style.color='';
+    banner.classList.add('hidden');
+    hideDelExamBtns();
+  }
+}
+
+function showDelExamBtns(){
+  document.querySelectorAll('.del-exam-btn').forEach(b=>b.classList.remove('hidden'));
+}
+function hideDelExamBtns(){
+  document.querySelectorAll('.del-exam-btn').forEach(b=>b.classList.add('hidden'));
+}
+
+async function deleteExam(id){
+  await sb.from('exams').delete().eq('id', id);
+  examItems = examItems.filter(e=>e.id!==id);
+  renderExams();
+  document.getElementById('exam-count-label').textContent=examItems.length+' ชุดข้อสอบ · เปิดให้ดาวน์โหลดฟรี';
+  if(examManageMode) showDelExamBtns();
+}
+
+async function deleteBuddy(id){
+  await sb.from('buddies').delete().eq('id', id);
+  buddyItems = buddyItems.filter(b=>b.id!==id);
+  renderBuddies();
+}
+
+// ── Confirm Delete Modal ───────────────────────────────────────────────────────
+function showConfirm(msg, onConfirm) {
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-yes').onclick = () => {
+    closeModal('modal-confirm');
+    onConfirm();
+  };
+  openModal('modal-confirm');
+}
+
+// ── Event Delegation for delete buttons ───────────────────────────────────────
+document.addEventListener('click', e => {
+  const examBtn = e.target.closest('[data-del-exam]');
+  if (examBtn) {
+    e.stopPropagation();
+    const id = Number(examBtn.dataset.delExam);
+    showConfirm('ลบข้อสอบนี้ออกจากระบบ?', () => deleteExam(id));
+    return;
+  }
+  const buddyBtn = e.target.closest('[data-del-buddy]');
+  if (buddyBtn) {
+    e.stopPropagation();
+    const id = Number(buddyBtn.dataset.delBuddy);
+    showConfirm('ลบประกาศนี้ออกจากระบบ?', () => deleteBuddy(id));
+  }
+});
+
+async function addExamItem() {
+  const title=document.getElementById('e-title').value.trim(); if(!title) return;
+  const item = {
+    subject: document.getElementById('e-subject').value,
+    title, year: parseInt(document.getElementById('e-year').value)||2567,
+    source: document.getElementById('e-source').value,
+    pages: parseInt(document.getElementById('e-pages').value)||0,
+    downloads: 0,
+    type: document.getElementById('e-type').value,
+    link: document.getElementById('e-link').value.trim(),
+    answer_link: document.getElementById('e-answer-link').value.trim(),
+  };
+  const { data, error } = await sb.from('exams').insert(item).select().single();
+  if (error) { showToast('❌ บันทึกไม่สำเร็จ: ' + error.message, true); return; }
+  examItems.push({ ...item, id: data.id, answerLink: item.answer_link });
+  closeModal('modal-add-exam');
+  document.getElementById('e-title').value='';
+  document.getElementById('e-link').value='';
+  document.getElementById('e-answer-link').value='';
+  renderExams();
+  document.getElementById('exam-count-label').textContent=examItems.length+' ชุดข้อสอบ · เปิดให้ดาวน์โหลดฟรี';
+  showToast('✅ เพิ่มข้อสอบสำเร็จ!');
+}
+
+// ── Contest ────────────────────────────────────────────────────────────────────
+function showContestFrame() {
+  document.getElementById('contest-landing').classList.add('hidden');
+  document.getElementById('contest-frame-wrap').classList.remove('hidden');
+  document.getElementById('camphub-frame').src='https://www.camphub.in.th/contest/';
+}
+function hideContestFrame() {
+  document.getElementById('contest-frame-wrap').classList.add('hidden');
+  document.getElementById('contest-landing').classList.remove('hidden');
+  document.getElementById('camphub-frame').src='';
+  document.getElementById('frame-loader').style.display='flex';
+}
+function frameLoaded() {
+  document.getElementById('camphub-frame').style.opacity='1';
+  document.getElementById('frame-loader').style.display='none';
+}
+
+// ── Profile ────────────────────────────────────────────────────────────────────
+function renderProfile() {
+  document.getElementById('profile-name').textContent=currentUser;
+  syncRoleButtons();
+  const isStudent=currentRole==='student';
+  document.getElementById('profile-fields').innerHTML = isStudent?`
+    <div class="form-group"><label class="form-label">ระดับชั้น</label><select class="field"><option>ม.1</option><option>ม.2</option><option>ม.3</option><option>ม.4</option><option>ม.5</option><option selected>ม.6</option></select></div>
+    <div class="form-group"><label class="form-label">GPAX</label><input class="field" placeholder="3.80" type="text"/></div>
+    <div class="form-group" style="grid-column:1/-1"><label class="form-label">คณะที่สนใจ</label><input class="field" value="วิศวกรรมคอมพิวเตอร์" type="text"/></div>
+    <div class="form-group" style="grid-column:1/-1"><label class="form-label">มหาวิทยาลัยที่สนใจ</label><input class="field" value="จุฬาลงกรณ์มหาวิทยาลัย" type="text"/></div>
+  `:`
+    <div class="form-group"><label class="form-label">คณะ</label><input class="field" value="วิศวกรรมคอมพิวเตอร์" type="text"/></div>
+    <div class="form-group"><label class="form-label">มหาวิทยาลัย</label><input class="field" value="จุฬาลงกรณ์มหาวิทยาลัย" type="text"/></div>
+    <div class="form-group"><label class="form-label">รอบที่เข้า</label><select class="field"><option>Portfolio</option><option>โควตา</option><option>TCAS3</option></select></div>
+  `;
+}
+
+function syncRoleButtons() {
+  const isSenior = currentRole==='senior';
+  const sBtn = document.getElementById('role-btn-student');
+  const rBtn = document.getElementById('role-btn-senior');
+  if(!sBtn||!rBtn) return;
+  sBtn.style.background   = isSenior ? 'transparent'           : 'rgba(79,70,229,.08)';
+  sBtn.style.color        = isSenior ? '#94a3b8'               : '#4f46e5';
+  sBtn.style.borderColor  = isSenior ? '#e2e8f0'               : '#4f46e5';
+  rBtn.style.background   = isSenior ? 'rgba(79,70,229,.08)'   : 'transparent';
+  rBtn.style.color        = isSenior ? '#4f46e5'               : '#94a3b8';
+  rBtn.style.borderColor  = isSenior ? '#4f46e5'               : '#e2e8f0';
+}
+
+function switchRole(role) {
+  currentRole = role;
+  // update sidebar role label
+  document.getElementById('sidebar-role').textContent = role==='senior' ? 'รุ่นพี่' : 'นักเรียน';
+  // show/hide add-senior button
+  const addSeniorBtn = document.getElementById('btn-add-senior');
+  if(addSeniorBtn) addSeniorBtn.classList.toggle('hidden', role!=='senior');
+  renderProfile();
+}
+
+function saveProfile() {
+  const btn=document.getElementById('save-btn');btn.textContent='✓ บันทึกแล้ว';
+  setTimeout(()=>btn.textContent='บันทึกข้อมูล',2000);
+}
+
+// ── Buddies ────────────────────────────────────────────────────────────────────
+function renderBuddies() {
+  const search = (document.getElementById('buddy-search')||{}).value||'';
+  const typeFilter = (document.getElementById('buddy-type-filter')||{}).value||'ทั้งหมด';
+
+  // Stats
+  document.getElementById('buddy-stat-total').textContent = buddyItems.length;
+  document.getElementById('buddy-stat-team').textContent = buddyItems.filter(b=>b.type==='หาเพื่อนร่วมทีม').length;
+  document.getElementById('buddy-stat-tutor').textContent = buddyItems.filter(b=>b.type==='หาเพื่อนติว').length;
+
+  const filtered = buddyItems.filter(b=>{
+    const matchType = typeFilter==='ทั้งหมด'||b.type===typeFilter;
+    const matchSearch = !search||(b.contest+b.school+b.skills+b.desc).includes(search);
+    return matchType && matchSearch;
+  });
+
+  const emptyEl = document.getElementById('buddy-empty');
+  const listEl = document.getElementById('buddy-list');
+
+  if(!buddyItems.length || !filtered.length) {
+    emptyEl.style.display='block'; listEl.innerHTML=''; return;
+  }
+  emptyEl.style.display='none';
+
+  listEl.innerHTML = filtered.map(b=>{
+    const ts = BUDDY_TYPE_STYLE[b.type]||{bg:'rgba(79,70,229,.08)',color:'#4f46e5'};
+    const skills = (b.skills||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const skillChips = skills.map(s=>`<span style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:7px;padding:3px 10px;font-size:12.5px;color:#475569">${s}</span>`).join('');
+    const newBadge = b.isNew ? `<span class="chip chip-sm" style="background:rgba(79,70,229,.08);color:#4f46e5">ใหม่</span>` : '';
+    return `<div class="s-card" style="margin-bottom:12px">
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(79,70,229,.08),rgba(79,70,229,.18));border:1.5px solid rgba(79,70,229,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#4f46e5;font-weight:800;font-size:16px">
+          ${b.name ? b.name[0] : '?'}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-weight:700;font-size:15px;color:#0f172a">${b.name}</span>
+            <span class="chip" style="background:${ts.bg};color:${ts.color}">${b.type}</span>
+            ${newBadge}
+          </div>
+          <div style="font-size:13px;color:#475569;margin-bottom:4px">
+            <span style="font-weight:600;color:#4f46e5">🏆 ${b.contest}</span>
+            ${b.school ? ` · ${b.school}` : ''} ${b.grade ? ` · ${b.grade}` : ''}
+          </div>
+          ${skillChips ? `<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px">${skillChips}</div>` : ''}
+          ${b.desc ? `<div style="color:#475569;font-size:13px;line-height:1.65;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${b.desc}</div>` : ''}
+          ${b.contact ? `<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(79,70,229,.06);border:1px solid rgba(79,70,229,.15);border-radius:8px;padding:5px 12px;font-size:12.5px;color:#4f46e5;font-weight:600">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.93 1.18 2 2 0 012.92 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+            ${b.contact}
+          </div>` : ''}
+        </div>
+        <button data-del-buddy="${b.id}" style="background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);color:#dc2626;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0" title="ลบประกาศ">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function addBuddyItem() {
+  const contest = document.getElementById('b-contest').value.trim();
+  if(!contest) return;
+  const item = {
+    user_id: currentUserId,
+    name: currentUser,
+    contest,
+    type: document.getElementById('b-type').value,
+    school: document.getElementById('b-school').value.trim(),
+    grade: document.getElementById('b-grade').value,
+    skills: document.getElementById('b-skills').value.trim(),
+    desc: document.getElementById('b-desc').value.trim(),
+    contact: document.getElementById('b-contact').value.trim(),
+  };
+  const { data, error } = await sb.from('buddies').insert(item).select().single();
+  if (error) { showToast('❌ บันทึกไม่สำเร็จ: ' + error.message, true); return; }
+  buddyItems.unshift({ ...item, id: data.id, isNew: true });
+  ['b-contest','b-school','b-skills','b-desc','b-contact'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-add-buddy');
+  renderBuddies();
+  showToast('✅ ลงประกาศสำเร็จ!');
+}
+
+// ── Modal helpers ──────────────────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.overlay:not(.hidden)').forEach(m=>m.classList.add('hidden'));}});
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+function initApp() {
+  const parts=currentUser.split(' ');
+  const short=parts[0]+(parts[1]?' '+parts[1][0]+'.':'');
+  document.getElementById('sidebar-name').textContent=short;
+  document.getElementById('sidebar-role').textContent=currentRole==='senior'?'รุ่นพี่':'นักเรียน';
+  document.getElementById('topbar-name').textContent=currentUser;
+  if(currentRole==='senior') document.getElementById('btn-add-senior').classList.remove('hidden');
+  renderPortfolio();
+  renderSeniors();
+  renderExams();
+  renderBuddies();
+  renderProfile();
+  navigate('portfolio');
+}
+
+// ── Identity Quiz ──────────────────────────────────────────────────────────────
+const ID_QUESTIONS = [
+  {cat:'🧠 ความสนใจ', text:'ตอนว่างๆ คุณมักจะทำอะไรมากที่สุด?', opts:[
+    {icon:'💻',text:'เล่น/สร้างโปรแกรม หรือ browsing เทคโนโลยีใหม่ๆ',tag:'tech'},
+    {icon:'🎨',text:'วาดรูป ออกแบบ ดูงาน design หรือฟัง/ทำเพลง',tag:'creative'},
+    {icon:'📚',text:'อ่านหนังสือ ค้นคว้า หรือดู documentary',tag:'academic'},
+    {icon:'🤝',text:'ออกไปพบเพื่อน ทำกิจกรรมกลุ่ม หรือช่วยเหลือคนอื่น',tag:'social'},
+  ]},
+  {cat:'⚡ พลังงาน', text:'คุณได้พลังงานจากอะไรมากที่สุด?', opts:[
+    {icon:'🧩',text:'แก้ปัญหาที่ซับซ้อน หาคำตอบได้แล้วรู้สึก achieve มาก',tag:'tech'},
+    {icon:'✨',text:'สร้างสิ่งใหม่ที่ไม่เคยมีมาก่อน ได้แสดงออกในแบบตัวเอง',tag:'creative'},
+    {icon:'🔬',text:'ศึกษาค้นคว้าจนเข้าใจหลักการจริงๆ อย่างลึกซึ้ง',tag:'academic'},
+    {icon:'💬',text:'เห็นว่าสิ่งที่ทำส่งผลดีต่อคนอื่น ทำให้ชีวิตคนดีขึ้น',tag:'social'},
+  ]},
+  {cat:'🏆 ความสำเร็จ', text:'ความสำเร็จแบบไหนที่ทำให้คุณภูมิใจที่สุด?', opts:[
+    {icon:'🥇',text:'ชนะการแข่งขัน สอบได้คะแนนสูง ทำได้ดีกว่าคนอื่น',tag:'competitive'},
+    {icon:'💡',text:'คิด solution ใหม่ที่แตกต่าง ทำให้คนอื่นประหลาดใจ',tag:'creative'},
+    {icon:'📈',text:'ทำโปรเจกต์เสร็จ เห็นผลลัพธ์จริงๆ ที่ใช้งานได้',tag:'tech'},
+    {icon:'🌱',text:'ช่วยให้คนอื่นเติบโตหรือเข้าใจอะไรบางอย่างได้',tag:'social'},
+  ]},
+  {cat:'🤔 การคิด', text:'เวลาเจอปัญหา คุณมักจะคิดแบบไหน?', opts:[
+    {icon:'📐',text:'แยก break down ปัญหาออกมาเป็นขั้นตอน logic',tag:'tech'},
+    {icon:'🌀',text:'คิดแบบ lateral thinking หา approach ที่ไม่เหมือนใคร',tag:'creative'},
+    {icon:'📊',text:'หาข้อมูล research ให้ครบก่อนตัดสินใจ',tag:'academic'},
+    {icon:'👥',text:'ปรึกษาคนอื่น ดู perspective หลายๆ มุม',tag:'social'},
+  ]},
+  {cat:'📚 วิชาที่ชอบ', text:'วิชาในโรงเรียนที่คุณชอบที่สุดคือ?', opts:[
+    {icon:'🔢',text:'คณิตศาสตร์ / ฟิสิกส์ / วิทยาศาสตร์',tag:'tech'},
+    {icon:'🎭',text:'ศิลปะ / ดนตรี / นาฏศิลป์',tag:'creative'},
+    {icon:'🧬',text:'ชีววิทยา / เคมี / วิทยาศาสตร์สิ่งมีชีวิต',tag:'science'},
+    {icon:'📖',text:'ภาษาไทย / ประวัติศาสตร์ / สังคมศึกษา',tag:'social'},
+  ]},
+  {cat:'💼 การทำงาน', text:'สไตล์การทำงานของคุณเป็นแบบไหน?', opts:[
+    {icon:'🎯',text:'วางแผนชัดเจน ทำเป็น milestone มีระบบ',tag:'competitive'},
+    {icon:'🌊',text:'ไหลไปตาม inspiration ทดลองสิ่งใหม่เสมอ',tag:'creative'},
+    {icon:'🔍',text:'ลงลึกในรายละเอียด ทำให้สมบูรณ์แบบที่สุด',tag:'academic'},
+    {icon:'🤲',text:'ทำงานเป็นทีม ฟังความเห็นทุกคน',tag:'social'},
+  ]},
+  {cat:'🌍 อยากเปลี่ยนแปลง', text:'ถ้าคุณสามารถเปลี่ยนแปลงโลกได้ 1 อย่าง คุณจะเลือกเรื่องอะไร?', opts:[
+    {icon:'🤖',text:'พัฒนาเทคโนโลยีให้ชีวิตคนสะดวกขึ้น',tag:'tech'},
+    {icon:'🎨',text:'ทำให้โลกสวยงามและน่าอยู่ขึ้นผ่านศิลปะและ design',tag:'creative'},
+    {icon:'🏥',text:'รักษาโรคและยกระดับสุขภาพของมนุษย์',tag:'science'},
+    {icon:'⚖️',text:'ลดความเหลื่อมล้ำและสร้างสังคมที่เป็นธรรม',tag:'social'},
+  ]},
+  {cat:'🎮 เวลาว่าง', text:'ถ้ามีเวลาว่าง 1 สัปดาห์ คุณจะทำอะไร?', opts:[
+    {icon:'🛠️',text:'build project ส่วนตัว ลองทำ side project ใหม่',tag:'tech'},
+    {icon:'✈️',text:'ท่องเที่ยว หาแรงบันดาลใจจากที่ใหม่ๆ',tag:'creative'},
+    {icon:'📗',text:'อ่านหนังสือที่อยากอ่านมานานหรือเรียน online course',tag:'academic'},
+    {icon:'🏕️',text:'ไปค่าย volunteer หรือทำกิจกรรมเพื่อสังคม',tag:'social'},
+  ]},
+  {cat:'👑 ความฝัน', text:'อาชีพในฝันของคุณคืออะไร?', opts:[
+    {icon:'👨‍💻',text:'Software Engineer / Data Scientist / Startup Founder',tag:'tech'},
+    {icon:'🎬',text:'Designer / Architect / Artist / Content Creator',tag:'creative'},
+    {icon:'🔬',text:'นักวิจัย / แพทย์ / วิศวกร',tag:'science'},
+    {icon:'🌐',text:'นักการทูต / NGO / นักข่าว / นักการเมือง',tag:'social'},
+  ]},
+  {cat:'🔥 แรงจูงใจ', text:'อะไรที่ทำให้คุณตื่นเต้นและอยากทำต่อมากที่สุด?', opts:[
+    {icon:'📉',text:'ความท้าทาย — ยิ่งยากยิ่งอยากเอาชนะ',tag:'competitive'},
+    {icon:'🎪',text:'ความแปลกใหม่ — ได้ทดลองสิ่งที่ไม่เคยทำ',tag:'creative'},
+    {icon:'🧪',text:'การค้นพบ — เข้าใจอะไรบางอย่างที่ลึกขึ้น',tag:'academic'},
+    {icon:'💝',text:'ผลกระทบ — เห็นว่าสิ่งที่ทำช่วยคนได้จริง',tag:'social'},
+  ]},
+  {cat:'🎯 จุดแข็ง', text:'เพื่อนๆ มักจะขอความช่วยเหลือจากคุณเรื่องอะไร?', opts:[
+    {icon:'💻',text:'แก้ปัญหาเทคนิค ตั้งค่า device หรืออธิบาย tech',tag:'tech'},
+    {icon:'🎨',text:'ออกแบบงาน ตกแต่ง ทำสื่อประกาศ',tag:'creative'},
+    {icon:'📝',text:'อ่านทบทวนเนื้อหา อธิบายวิชาที่ยาก',tag:'academic'},
+    {icon:'🫂',text:'ปรึกษาปัญหา รับฟัง ให้คำแนะนำชีวิต',tag:'social'},
+  ]},
+  {cat:'🏅 ประสบการณ์', text:'กิจกรรม/ความสำเร็จที่คุณภูมิใจมากที่สุดในชีวิตตอนนี้คืออะไร?', opts:[
+    {icon:'🥈',text:'แข่งขันหรือสอบได้รางวัล/คะแนนสูง',tag:'competitive'},
+    {icon:'🖼️',text:'สร้างชิ้นงาน ผลงาน หรือ project ที่สวยงาม',tag:'creative'},
+    {icon:'🔭',text:'ทำโปรเจกต์วิจัย โครงงานวิทย์ หรือค้นคว้าอะไรบางอย่าง',tag:'academic'},
+    {icon:'🤝',text:'เป็นผู้นำกลุ่ม จัดงาน หรือช่วยเหลือชุมชน',tag:'social'},
+  ]},
+  {cat:'📐 วิธีเรียนรู้', text:'คุณเรียนรู้ได้ดีที่สุดแบบไหน?', opts:[
+    {icon:'🛠️',text:'ลงมือทำ learning by doing',tag:'tech'},
+    {icon:'👁️',text:'ดูตัวอย่าง ดูภาพ มองเห็น pattern',tag:'creative'},
+    {icon:'📖',text:'อ่านเข้าใจทฤษฎีก่อน แล้วค่อยลงมือ',tag:'academic'},
+    {icon:'🗣️',text:'คุยและ discuss กับคนอื่น',tag:'social'},
+  ]},
+  {cat:'🌟 คุณค่า', text:'สิ่งไหนสำคัญกับคุณมากที่สุดในชีวิต?', opts:[
+    {icon:'🚀',text:'ความก้าวหน้า — เติบโตและพัฒนาตัวเองอยู่เสมอ',tag:'competitive'},
+    {icon:'🌈',text:'อิสรภาพ — ได้แสดงออกและสร้างสรรค์โดยไม่มีกรอบ',tag:'creative'},
+    {icon:'🎓',text:'ความรู้ — เข้าใจโลกอย่างลึกซึ้งและถ่องแท้',tag:'academic'},
+    {icon:'❤️',text:'ความสัมพันธ์ — มีคนรักและได้ช่วยเหลือคนรอบข้าง',tag:'social'},
+  ]},
+  {cat:'🔮 อนาคต', text:'10 ปีข้างหน้า คุณอยากเป็นแบบไหน?', opts:[
+    {icon:'🦄',text:'Founder / CTO / ผู้เชี่ยวชาญด้านเทคโนโลยีระดับโลก',tag:'tech'},
+    {icon:'🏆',text:'ศิลปิน / นักออกแบบ / Creative Director ชั้นนำ',tag:'creative'},
+    {icon:'🎓',text:'นักวิจัย / Professor / ผู้เชี่ยวชาญในสาขาวิชา',tag:'science'},
+    {icon:'🌏',text:'ผู้นำองค์กร NGO / นักการเมือง / ผู้สร้างการเปลี่ยนแปลงสังคม',tag:'social'},
+  ]},
+];
+
+const ID_PROFILES = {
+  tech:{emoji:'💻',type:'นักเทคโนโลยี',title:'The Tech Builder',desc:'คุณมีความคิดแบบ engineer — ชอบแก้ปัญหาด้วยโค้ดและเทคโนโลยี ชอบสร้างสิ่งที่ใช้งานได้จริง คุณจะโดดเด่นในสาย STEM และ Tech Startup',
+    strengths:[{name:'Logical Thinking',pct:90,color:'#4f46e5'},{name:'Problem Solving',pct:85,color:'#7c3aed'},{name:'Technical Skills',pct:80,color:'#2563eb'},{name:'Creativity in Tech',pct:70,color:'#059669'}],
+    camps:[{emoji:'💻',name:'Young Webmaster Camp',desc:'Web Development ระดับประเทศ'},{emoji:'🤖',name:'POSN Computer',desc:'Olympiad คอมพิวเตอร์'},{emoji:'⚡',name:'Hackathon (SCB/KBTG)',desc:'สร้าง product จริงภายใน 48 ชม.'},{emoji:'🔬',name:'AI/ML Bootcamp',desc:'Machine Learning เบื้องต้น'}],
+    faculties:[{rank:1,name:'วิศวกรรมคอมพิวเตอร์',uni:'จุฬา / มหิดล / KMITL',match:'95%'},{rank:2,name:'Computer Science',uni:'มหิดล / เกษตร / ธรรมศาสตร์',match:'92%'},{rank:3,name:'วิศวกรรมซอฟต์แวร์',uni:'KMUTT / มช. / ขอนแก่น',match:'88%'}],
+    tips:['เริ่ม build project ส่วนตัวตั้งแต่ ม.4-5 แล้ว push ขึ้น GitHub','สมัคร hackathon และค่าย tech — ชนะหรือไม่ก็ได้ ประสบการณ์สำคัญกว่า','เรียน Python หรือ JavaScript ให้คล่องก่อน ค่อย branch ออกไป']},
+  creative:{emoji:'🎨',type:'นักสร้างสรรค์',title:'The Creative Mind',desc:'คุณมองโลกด้วยสายตาของศิลปิน — เห็น beauty และ pattern ที่คนอื่นมองข้าม ชอบแสดงออกและสร้างสิ่งที่สวยงาม คุณจะเก่งในสาย Design, Architecture หรือ Arts',
+    strengths:[{name:'Creative Thinking',pct:92,color:'#7c3aed'},{name:'Aesthetic Sense',pct:88,color:'#db2777'},{name:'Self-Expression',pct:82,color:'#ea580c'},{name:'Innovation',pct:75,color:'#4f46e5'}],
+    camps:[{emoji:'🏛️',name:'ค่าย Design Thinking',desc:'Design process ระดับมืออาชีพ'},{emoji:'🎬',name:'Young Creator Camp',desc:'Content & Media สร้างสรรค์'},{emoji:'🖌️',name:'ค่ายสถาปัตย์',desc:'Architecture โดยมหาวิทยาลัย'},{emoji:'✨',name:'TCDC Workshop',desc:'Creative Design & Innovation'}],
+    faculties:[{rank:1,name:'สถาปัตยกรรมศาสตร์',uni:'จุฬา / ศิลปากร / ลาดกระบัง',match:'94%'},{rank:2,name:'นิเทศศิลป์ / ออกแบบ',uni:'ศิลปากร / เกษตร / ธรรมศาสตร์',match:'91%'},{rank:3,name:'วิจิตรศิลป์',uni:'ศิลปากร / ลาดกระบัง / มช.',match:'86%'}],
+    tips:['สร้าง portfolio ภาพที่มี concept ชัด ไม่ใช่แค่สวย — เล่าเรื่องให้ได้','เข้าค่าย design หรือ workshop เยอะๆ เพื่อ build network และ skills','ฝึก sketch และ presentation เพราะสถาปัตย์/design ต้องนำเสนองานให้เป็น']},
+  academic:{emoji:'🔬',type:'นักวิชาการ',title:'The Deep Thinker',desc:'คุณมีความอยากรู้อยากเห็นในเชิงวิชาการอย่างลึกซึ้ง ชอบค้นคว้าและทำความเข้าใจสิ่งต่างๆ อย่างถ่องแท้ คุณจะโดดเด่นในสาย Science, Research หรือ Academia',
+    strengths:[{name:'Critical Thinking',pct:91,color:'#059669'},{name:'Research Skills',pct:87,color:'#4f46e5'},{name:'Attention to Detail',pct:84,color:'#2563eb'},{name:'Academic Writing',pct:78,color:'#7c3aed'}],
+    camps:[{emoji:'🧬',name:'POSN (วิทยาศาสตร์โอลิมปิก)',desc:'Biology / Chemistry / Physics'},{emoji:'🔭',name:'ค่ายวิทยาศาสตร์ สวทช.',desc:'ค้นคว้าวิจัยระดับชาติ'},{emoji:'🏥',name:'ค่ายแพทย์',desc:'จุฬา / มหิดล / เชียงใหม่'},{emoji:'📊',name:'Young Scientists Camp',desc:'JSTP สำหรับนักวิทยาศาสตร์รุ่นใหม่'}],
+    faculties:[{rank:1,name:'แพทยศาสตร์',uni:'จุฬา / มหิดล / มช.',match:'93%'},{rank:2,name:'วิทยาศาสตร์ (ชีวเคมี/เคมี)',uni:'มหิดล / จุฬา / เกษตร',match:'90%'},{rank:3,name:'เภสัชศาสตร์',uni:'มหิดล / จุฬา / ขอนแก่น',match:'85%'}],
+    tips:['ทำโครงงานวิทยาศาสตร์ที่มี hypothesis ชัดและ methodology เป็นระบบ','ลองส่ง paper ในงานประชุมวิชาการระดับนักเรียน เพื่อฝึก research writing','หา mentor ที่เป็น professor หรือนักวิจัย — จะเปิดโลกมาก']},
+  social:{emoji:'🌐',type:'นักสร้างสังคม',title:'The People Connector',desc:'คุณมีความสามารถพิเศษในการเชื่อมต่อและนำพาคน คุณ drive ด้วย impact ที่มีต่อผู้อื่น และจะโดดเด่นในสาย Law, Social Science, International Relations หรือ NGO',
+    strengths:[{name:'Communication',pct:93,color:'#059669'},{name:'Empathy & EQ',pct:89,color:'#e11d48'},{name:'Leadership',pct:83,color:'#d97706'},{name:'Collaboration',pct:86,color:'#4f46e5'}],
+    camps:[{emoji:'🌏',name:'Young Diplomat Camp',desc:'International Relations & Diplomacy'},{emoji:'⚖️',name:'ค่ายกฎหมาย',desc:'Law camp จุฬา / ธรรมศาสตร์'},{emoji:'📰',name:'Young Journalist',desc:'สื่อสารมวลชนระดับเยาวชน'},{emoji:'🏛️',name:'MUN (Model UN)',desc:'สหประชาชาติจำลอง'}],
+    faculties:[{rank:1,name:'นิติศาสตร์',uni:'จุฬา / ธรรมศาสตร์ / มช.',match:'91%'},{rank:2,name:'รัฐศาสตร์ / IR',uni:'จุฬา / ธรรมศาสตร์ / มหิดล',match:'89%'},{rank:3,name:'นิเทศศาสตร์',uni:'จุฬา / ธรรมศาสตร์ / เกษตร',match:'84%'}],
+    tips:['เข้าร่วม MUN, Student Council หรือ debate club เพื่อฝึก public speaking','ทำ volunteer หรือ social project ที่มี impact ชัดเจน วัดผลได้','เรียนภาษาอังกฤษให้แข็งแกร่ง — สาย social/international ต้องการมาก']},
+  science:{emoji:'⚗️',type:'นักวิทยาศาสตร์',title:'The Scientist',desc:'คุณหลงรักการทดลองและค้นพบความจริงของธรรมชาติ มีความละเอียดรอบคอบและคิดแบบ scientific method คุณจะเก่งในสาย Medicine, Pharmacy หรือ Pure Science',
+    strengths:[{name:'Scientific Thinking',pct:90,color:'#059669'},{name:'Lab & Research',pct:86,color:'#4f46e5'},{name:'Analytical Skills',pct:83,color:'#2563eb'},{name:'Precision',pct:88,color:'#7c3aed'}],
+    camps:[{emoji:'🧬',name:'POSN ชีววิทยา/เคมี',desc:'Olympiad สายวิทย์'},{emoji:'🏥',name:'ค่ายแพทย์จุฬา',desc:'Medical camp ระดับประเทศ'},{emoji:'🔬',name:'JSTP',desc:'Junior Science Talent Project'},{emoji:'💊',name:'ค่ายเภสัช',desc:'Pharmacy camp มหิดล'}],
+    faculties:[{rank:1,name:'แพทยศาสตร์',uni:'จุฬา / มหิดล / มช.',match:'95%'},{rank:2,name:'เภสัชศาสตร์',uni:'มหิดล / จุฬา / เชียงใหม่',match:'91%'},{rank:3,name:'วิทยาศาสตร์การแพทย์',uni:'มหิดล / เกษตร / ธรรมศาสตร์',match:'87%'}],
+    tips:['GPAX และคะแนน POSN หรือ Olympiad สำคัญมากสำหรับสายแพทย์/เภสัช','ทำโครงงานวิทยาศาสตร์ที่มีผลลัพธ์ชัดเจน — เน้นที่ impact','ฝึกเขียน scientific report และ presentation เป็นภาษาอังกฤษ']},
+  competitive:{emoji:'🏆',type:'นักแข่งขัน',title:'The Champion',desc:'คุณ driven ด้วยความท้าทายและชอบพิสูจน์ตัวเอง มีความมุ่งมั่นสูงและไม่ยอมแพ้ง่ายๆ คุณจะโดดเด่นในทุกสายถ้าเลือกที่ที่ใช่ และมักจะสร้างผลงาน top-tier',
+    strengths:[{name:'Drive & Ambition',pct:95,color:'#d97706'},{name:'Resilience',pct:88,color:'#e11d48'},{name:'Goal Setting',pct:85,color:'#4f46e5'},{name:'Performance Under Pressure',pct:82,color:'#059669'}],
+    camps:[{emoji:'🥇',name:'POSN (ทุกสาขา)',desc:'เป้าหมายสูง ผลตอบแทนสูง'},{emoji:'💻',name:'Hackathon / Competition',desc:'ได้รางวัลจริงๆ เพิ่ม portfolio'},{emoji:'🌏',name:'MUN / Debate',desc:'แข่งขันด้าน soft skills'},{emoji:'📐',name:'Math/Science Olympiad',desc:'ระดับนานาชาติ'}],
+    faculties:[{rank:1,name:'วิศวกรรมศาสตร์ (สาขาที่ชอบ)',uni:'จุฬา / มหิดล / KMUTT',match:'90%'},{rank:2,name:'แพทยศาสตร์',uni:'จุฬา / มหิดล / มช.',match:'88%'},{rank:3,name:'นิติศาสตร์ / รัฐศาสตร์',uni:'ธรรมศาสตร์ / จุฬา',match:'85%'}],
+    tips:['เลือก 1-2 สายที่ passion จริงๆ แล้ว go deep — อย่า spread ตัวเองมากเกิน','track record สำคัญ — เริ่มแข่งขันตั้งแต่ ม.ต้น สะสมรางวัลขึ้นมาเรื่อยๆ','หา mentor หรือ community ที่ competitive เพื่อ push ตัวเองให้ไปได้ไกลขึ้น']},
+};
+
+let idAnswers = new Array(15).fill(null);
+let idCurrent = 0;
+
+function idShow(el){document.getElementById(el).classList.remove('hidden')}
+function idHide(el){document.getElementById(el).classList.add('hidden')}
+
+function startIdentityQuiz(){
+  idHide('id-intro'); idShow('id-quiz');
+  idRenderQ(0);
+}
+
+function idRenderQ(idx){
+  idCurrent = idx;
+  const q = ID_QUESTIONS[idx];
+  const pct = Math.round(((idx+1)/15)*100);
+  document.getElementById('id-progress-bar').style.width = pct+'%';
+  document.getElementById('id-q-label').textContent = `ข้อ ${idx+1} จาก 15`;
+  document.getElementById('id-q-pct').textContent = pct+'%';
+  document.getElementById('id-q-num').textContent = idx+1;
+  document.getElementById('id-q-cat').textContent = q.cat;
+  document.getElementById('id-q-text').textContent = q.text;
+
+  document.getElementById('id-options').innerHTML = q.opts.map((o,i)=>`
+    <button onclick="idSelectOpt(${i})" style="display:flex;align-items:center;gap:13px;padding:13px 16px;border-radius:12px;border:1.5px solid ${idAnswers[idx]===i?'#4f46e5':'#e2e8f0'};background:${idAnswers[idx]===i?'rgba(79,70,229,.06)':'#fafbfc'};cursor:pointer;transition:all .15s;font-size:13.5px;color:${idAnswers[idx]===i?'#4f46e5':'#475569'};font-weight:500;font-family:'Anuphan',sans-serif;text-align:left;width:100%" onmouseover="if(${idAnswers[idx]!==i}){this.style.borderColor='#4f46e5';this.style.background='rgba(79,70,229,.04)'}" onmouseout="if(${idAnswers[idx]!==i}){this.style.borderColor='#e2e8f0';this.style.background='#fafbfc'}">
+      <div style="width:32px;height:32px;border-radius:8px;flex-shrink:0;background:${idAnswers[idx]===i?'#4f46e5':'#f1f5f9'};border:1px solid ${idAnswers[idx]===i?'#4f46e5':'#e2e8f0'};display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s">${o.icon}</div>
+      <span>${o.text}</span>
+    </button>
+  `).join('');
+
+  // animate card
+  const c = document.getElementById('id-q-card');
+  c.style.animation='none'; void c.offsetWidth; c.style.animation='slideUp .28s ease forwards';
+
+  document.getElementById('id-btn-prev').disabled = idx===0;
+  document.getElementById('id-btn-next').disabled = idAnswers[idx]===null;
+  document.getElementById('id-btn-next').textContent = idx===14 ? 'ดูผลลัพธ์ 🎯' : 'ถัดไป →';
+}
+
+function idSelectOpt(i){
+  idAnswers[idCurrent]=i;
+  idRenderQ(idCurrent);
+}
+function idNextQ(){
+  if(idAnswers[idCurrent]===null) return;
+  if(idCurrent===14){idShowLoading();return;}
+  idRenderQ(idCurrent+1);
+}
+function idPrevQ(){if(idCurrent>0)idRenderQ(idCurrent-1);}
+
+function idShowLoading(){
+  idHide('id-quiz'); idShow('id-loading');
+  const steps=['กำลังวิเคราะห์รูปแบบคำตอบ...','ระบุจุดแข็งและแนวโน้มความสนใจ...','จับคู่กับ profile ที่เหมาะสม...','สร้างคำแนะนำเฉพาะบุคคล...'];
+  const el=document.getElementById('id-loading-steps'); el.innerHTML='';
+  steps.forEach((s,i)=>setTimeout(()=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8;justify-content:center;opacity:0;transition:opacity .4s';
+    d.innerHTML=`<span style="color:#4f46e5">✓</span> ${s}`;
+    el.appendChild(d); void d.offsetWidth; d.style.opacity='1';
+  },i*600));
+  setTimeout(idShowResult, 2800);
+}
+
+function idComputeProfile(){
+  const sc={tech:0,creative:0,academic:0,social:0,competitive:0,science:0};
+  idAnswers.forEach((a,qi)=>{if(a!==null){const tag=ID_QUESTIONS[qi].opts[a].tag;if(sc[tag]!==undefined)sc[tag]++;}});
+  return Object.entries(sc).sort((a,b)=>b[1]-a[1])[0][0];
+}
+
+function idShowResult(){
+  idHide('id-loading'); idShow('id-result');
+  const P=ID_PROFILES[idComputeProfile()];
+
+  document.getElementById('id-res-type').textContent=P.type;
+  document.getElementById('id-res-emoji').textContent=P.emoji;
+  document.getElementById('id-res-title').textContent=P.title;
+  document.getElementById('id-res-desc').textContent=P.desc;
+
+  document.getElementById('id-strengths').innerHTML=P.strengths.map(s=>`
+    <div style="margin-bottom:11px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:13.5px;font-weight:600;color:#0f172a">${s.name}</span>
+        <span style="font-size:12px;font-weight:700;color:${s.color}">${s.pct}%</span>
+      </div>
+      <div style="background:#f1f5f9;border-radius:99px;height:7px">
+        <div style="width:0%;height:100%;border-radius:99px;background:${s.color};transition:width 1s cubic-bezier(.4,0,.2,1)" data-w="${s.pct}%"></div>
+      </div>
+    </div>`).join('');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('#id-strengths [data-w]').forEach(el=>el.style.width=el.dataset.w);
+  }));
+
+  document.getElementById('id-camps').innerHTML=P.camps.map(c=>`
+    <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:13px 14px;transition:all .15s">
+      <div style="font-size:20px;margin-bottom:5px">${c.emoji}</div>
+      <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:2px">${c.name}</div>
+      <div style="font-size:11.5px;color:#94a3b8">${c.desc}</div>
+    </div>`).join('');
+
+  document.getElementById('id-faculties').innerHTML=P.faculties.map(f=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border:1px solid #e2e8f0;border-radius:11px;padding:11px 14px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:24px;height:24px;border-radius:6px;background:rgba(79,70,229,.08);color:#4f46e5;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">${f.rank}</div>
+        <div><div style="font-size:13.5px;font-weight:700;color:#0f172a">${f.name}</div><div style="font-size:12px;color:#94a3b8">${f.uni}</div></div>
+      </div>
+      <span style="font-size:12px;font-weight:700;color:#059669;background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.2);border-radius:6px;padding:3px 9px">${f.match}</span>
+    </div>`).join('');
+
+  document.getElementById('id-tips').innerHTML=P.tips.map((t,i)=>`
+    <div style="display:flex;gap:11px;align-items:flex-start;background:#f8fafc;border:1px solid #e2e8f0;border-radius:11px;padding:12px 14px">
+      <div style="width:22px;height:22px;border-radius:6px;background:rgba(79,70,229,.1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#4f46e5;flex-shrink:0;margin-top:1px">${i+1}</div>
+      <div style="font-size:13.5px;color:#475569;line-height:1.6">${t}</div>
+    </div>`).join('');
+
+  // scroll to top of content
+  document.getElementById('main').scrollTo({top:0,behavior:'smooth'});
+}
+
+function resetIdentityQuiz(){
+  idAnswers=new Array(15).fill(null); idCurrent=0;
+  idHide('id-result'); idShow('id-intro');
+  document.getElementById('main').scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
